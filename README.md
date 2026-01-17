@@ -42,7 +42,7 @@ Edit `grammar.ne` and recompile to add features.
 
 ## References
 
-- Silva, Alfredo Tito. "Desenvolvimento de uma linguagem específica de domínio para criação de histórias interativas." (Thesis, UFMA, 2010). [Link](https://tedebc.ufma.br/jspui/handle/tede/2010)
-- [PDF Link](https://rosario.ufma.br/jspui/bitstream/123456789/6908/1/AlfredoTitoSilva.pdf)
+- Pinto, Hedvan Fernandes. "Authorship of Interactive e-books: conceptual model fables and requirements." [Link](https://tedebc.ufma.br/jspui/handle/tede/2010)
+- Silva, Alfredo Tito. "FableJS: Biblioteca para criação de histórias interativas." [PDF Link](https://rosario.ufma.br/jspui/bitstream/123456789/6908/1/AlfredoTitoSilva.pdf)
 
 Inspired by these works for DSL creation in storytelling.
