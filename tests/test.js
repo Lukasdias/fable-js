@@ -1,4 +1,4 @@
-const { parseDSL } = require('./parser');
+const { parseDSL } = require('../src/parser');
 
 // Test DSL code
 const dslCode = `

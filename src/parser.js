@@ -1,6 +1,6 @@
 // FableJS DSL Parser
 const nearley = require('nearley');
-const grammar = require('./index');
+const grammar = require('../lib/index');
 
 function parseDSL(dslCode) {
   dslCode = dslCode.trim(); // Remove leading/trailing whitespace
