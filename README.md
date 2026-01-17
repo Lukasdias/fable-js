@@ -1,6 +1,7 @@
 # Fable-JS DSL Parser
 
-A simple parser for a Ruby-like DSL used in interactive storytelling applications. Built with Nearley for parsing custom grammar into AST.
+A simple parser for a Ruby-like DSL used in interactive storytelling applications.
+Built with Nearley for parsing custom grammar into AST.
 
 ## Installation
 
@@ -30,7 +31,15 @@ npm test
 The DSL supports:
 - Fables with pages
 - Agents (text, buttons) with positions
-- Example: `fable "Story" do page 1 do text "Hello" at [100, 100] end end`
+
+Example:
+```ruby
+fable "Story" do
+  page 1 do
+    text "Hello" at [100, 100]
+  end
+end
+```
 
 Edit `grammar.ne` and recompile to add features.
 
