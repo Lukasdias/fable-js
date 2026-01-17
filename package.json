@@ -1,0 +1,21 @@
+{
+  "name": "fable-js",
+  "version": "1.0.0",
+  "description": "Simple DSL parser for FableJS",
+  "main": "index.js",
+  "scripts": {
+    "compile": "nearleyc grammar.ne -o index.js",
+    "watch": "nearleyc --watch grammar.ne -o index.js",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "dsl",
+    "parser",
+    "fable"
+  ],
+  "author": "Lukasdias",
+  "license": "MIT",
+  "dependencies": {
+    "nearley": "^2.20.1"
+  }
+}
