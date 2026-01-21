@@ -1,23 +1,33 @@
 {
-  "name": "fable-js",
+  "name": "@fable-js/parser",
   "version": "1.0.0",
-  "description": "Simple DSL parser for FableJS",
-  "main": "lib/index.js",
+  "description": "DSL parser for FableJS interactive storytelling",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/types.d.ts"
+    }
+  },
   "scripts": {
-    "build": "nearleyc src/grammar.ne -o lib/index.js",
-    "compile": "npm run build",
-    "watch": "nearleyc --watch src/grammar.ne -o lib/index.js",
-    "test": "node tests/test.js",
-    "prepublishOnly": "npm run build"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "dsl",
     "parser",
-    "fable"
+    "fable",
+    "storytelling",
+    "interactive",
+    "education"
   ],
   "author": "Lukasdias",
   "license": "MIT",
   "dependencies": {
-    "nearley": "^2.20.1"
+    "ohm-js": "^17.3.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.17"
   }
 }
