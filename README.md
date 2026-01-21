@@ -81,52 +81,31 @@ The DSL uses a PEG-based grammar defined in `src/grammar/fable.ohm`. You can vis
 fable "Interactive Story" do
   page 1 do
     // Comments are supported
-    set health to 100
-    set name to "Hero"
-    text "Welcome {name}! Health: {health}" at [100, 100]
+    text "Welcome!" at [100, 100]
     image "bg.jpg" at [0, 0]
     video "intro.mp4" at [50, 50]
 
-    button "Attack" at [200, 200] animate "pulse" duration 2s do
+    button "Start" at [200, 200] do
       on_click do
-        subtract 10 from health
-        play_sound "sword.wav" volume 0.7
-        if "health <= 0" do
-          go_to_page 3
-        end
+        go_to_page 2
       end
     end
 
-    button "Random Event" at [300, 200] do
-      on_click do
-        set event to pick_one ["good", "bad", "neutral"]
-        if "event == 'good'" do
-          add 20 to health
-          music "happy.mp3" loop
-        end
-      end
+    button "No Events" at [300, 300] do
+      // Buttons always need "do end" block
     end
 
-    for i in 1..3 do
-      button "Choice {i}" at [100, 200 + i * 50] do
-        on_click do
-          set choice to i
-          go_to_page 2
-        end
-      end
+    if "health > 50" do
+      text "You're strong!" at [150, 150]
+    end
+
+    for i in 0..5 do
+      image "tile.png" at [100, 100]
     end
   end
 
-  page 2 auto_advance 5s do
-    text "You chose option {choice}" at [100, 100]
-    wait 2s do
-      play_sound "transition.wav"
-    end
-  end
-
-  page 3 do
-    text "Game Over" at [100, 100]
-    stop_music
+  page 2 do
+    text "Page 2" at [100, 100]
   end
 end
 ```

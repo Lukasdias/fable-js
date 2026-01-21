@@ -121,7 +121,7 @@ export function createSemantics(grammar) {
       return result;
     },
     
-     ButtonAgent(_button, label, _at, position, animate, eventsBlock, _comma, _end) {
+     ButtonAgent(_button, label, _at, position, animate, _do, events, _end) {
        const result = {
          type: 'button',
          id: ++agentIdCounter,
@@ -129,16 +129,11 @@ export function createSemantics(grammar) {
          position: position.toAST()
        };
 
-       if (animate.children && animate.children.length > 0) {
+       if (animate && animate.children && animate.children.length > 0) {
          result.animate = animate.children[0].toAST();
        }
 
-       if (eventsBlock.children && eventsBlock.children.length > 0) {
-         // eventsBlock is (_do, events, _end), so events is at index 1
-         result.events = eventsBlock.children[1].children.map(e => e.toAST());
-       } else {
-         result.events = [];
-       }
+       result.events = events.children.map(e => e.toAST());
 
        return result;
      },
@@ -220,7 +215,7 @@ export function createSemantics(grammar) {
     MoveAction(_move, agentRef, _to, position, _duration, duration, easing) {
       const result = {
         type: 'move',
-        agentId: agentRef.toAST().value, // Extract number from typed value
+        agentId: agentRef.toAST(), // AgentRef returns number
         to: position.toAST(), // Position returns [number, number]
         duration: duration.toAST() // Duration returns number
       };
@@ -235,7 +230,7 @@ export function createSemantics(grammar) {
     StopAnimationAction(_stopAnimation, agentRef) {
       return {
         type: 'stop_animation',
-        agentId: agentRef.toAST().value // Extract number from typed value
+        agentId: agentRef.toAST() // AgentRef returns number
       };
     },
 
@@ -356,10 +351,6 @@ export function createSemantics(grammar) {
 
     EasingOption(_easing, value) {
       return value.toAST().value; // Extract string from typed value
-    },
-
-    EasingOption(_easing, value) {
-      return value.toAST();
     },
 
     // Expressions

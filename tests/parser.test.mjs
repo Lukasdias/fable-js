@@ -756,7 +756,7 @@ describe('FableJS DSL Parser', () => {
         fable "Test" do
            page 1 do
              text "Bounce!" at [100, 100] animate "bounce"
-             button "Pulse" at [200, 200]
+              button "Pulse" at [200, 200] do end
              image "star.png" at [50, 50] animate "spin"
           end
         end
