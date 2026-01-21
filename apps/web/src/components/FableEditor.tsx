@@ -1,27 +1,16 @@
 'use client'
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
-import dynamic from 'next/dynamic'
 import { FablePlayer } from '@fable-js/runtime'
 import { parseDSL, validateDSL, type Fable } from '@fable-js/parser'
+import { FableMonacoEditor } from '@fable-js/editor'
 import { cn } from '@/lib/utils'
-import { registerFableLanguage } from '@/lib/fable-language'
 import { EXAMPLES } from '@/lib/examples'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, Play, FileText, Eye } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-
-// Monaco Editor needs to be client-only
-const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full text-muted-foreground">
-      Loading editor...
-    </div>
-  )
-})
 
 const DEFAULT_DSL = `fable "My Interactive Story" do
   page 1 do
@@ -52,34 +41,33 @@ export function FableEditor() {
   const [error, setError] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
 
-  // Register FableJS language for Monaco
+  // Parse DSL when it changes - use useEffect instead of useMemo with side effects
   useEffect(() => {
-    registerFableLanguage()
-  }, [])
-
-  // Parse DSL when it changes
-  const parseResult = useMemo(() => {
     if (!dsl.trim()) {
       setAst(null)
       setError(null)
-      return { ast: null, error: null }
+      return
     }
 
     try {
       const parsedAst = parseDSL(dsl)
       setAst(parsedAst)
       setError(null)
-      return { ast: parsedAst, error: null }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Parse error'
       setAst(null)
       setError(errorMessage)
-      return { ast: null, error: errorMessage }
     }
   }, [dsl])
 
+  // Stable callback to prevent re-renders
   const handleEditorChange = useCallback((value: string | undefined) => {
     setDsl(value || '')
+  }, []) // Empty dependency array ensures stability
+
+  // Stable callback for editor mount
+  const handleEditorDidMount = useCallback((editor: any) => {
+    // Keyboard shortcuts are now handled by FableMonacoEditor component
   }, [])
 
   const handlePlay = useCallback(() => {
@@ -132,17 +120,17 @@ export function FableEditor() {
               <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
                 <h2 className="text-sm font-medium">DSL Editor</h2>
                 <div className="text-xs text-muted-foreground">
-                  {dsl.split('\n').length} lines
+                  {dsl.split('\n').length} lines • Shift+Alt+F to format
                 </div>
               </div>
               <div className="flex-1 min-h-0">
-                <MonacoEditor
-                  height="100%"
-                  language="fable"
+                <FableMonacoEditor
+                  key="fable-editor" // Stable key to prevent recreation
                   value={dsl}
                   onChange={handleEditorChange}
-                  theme="vs-light"
-                  options={{
+                  onMount={handleEditorDidMount}
+                  theme="fable-dark"
+                  options={useMemo(() => ({
                     minimap: { enabled: false },
                     fontSize: 14,
                     lineNumbers: 'on',
@@ -153,7 +141,17 @@ export function FableEditor() {
                     insertSpaces: true,
                     wordWrapColumn: 80,
                     rulers: [80],
-                  }}
+                    quickSuggestions: {
+                      other: true,
+                      comments: false,
+                      strings: true,
+                    },
+                    suggestOnTriggerCharacters: true,
+                    acceptSuggestionOnEnter: 'on',
+                    tabCompletion: 'on',
+                    formatOnType: true,
+                    formatOnPaste: true,
+                  }), [])}
                 />
               </div>
             </div>

@@ -1,6 +1,7 @@
 {
   "name": "fable-js-web",
   "version": "1.0.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,6 +16,7 @@
     "react-dom": "^19.0.0",
     "@fable-js/parser": "workspace:*",
     "@fable-js/runtime": "workspace:*",
+    "@fable-js/editor": "workspace:*",
     "@monaco-editor/react": "^4.6.0",
     "monaco-editor": "^0.50.0",
     "lucide-react": "^0.439.0",
