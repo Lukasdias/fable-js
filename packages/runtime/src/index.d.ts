@@ -3,6 +3,8 @@ import type { Fable } from '@fable-js/parser';
 
 export interface FablePlayerProps {
   ast: Fable;
+  width?: number;
+  height?: number;
   className?: string;
   style?: React.CSSProperties;
   onStateChange?: (state: {
@@ -14,7 +16,10 @@ export interface FablePlayerProps {
 
 export declare const FablePlayer: React.FC<FablePlayerProps>;
 
-export { FableState } from './engine/FableState';
+// Zustand store
+export { useRuntimeStore } from './store/RuntimeStore';
+
+// Engine classes (for advanced use cases)
 export { ExpressionEvaluator } from './engine/ExpressionEvaluator';
 
 // Component types for advanced usage

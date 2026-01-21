@@ -24,21 +24,31 @@ A complete interactive storytelling framework with DSL parser and React runtime 
 - TypeScript support with full type definitions
 - ESM package structure suitable for monorepo integration
 
-### React Runtime (`@fable-js/runtime`)
-- Interactive story player component (`<FablePlayer />`)
-- Real-time state management (variables, page navigation)
+### React Konva Runtime (`@fable-js/runtime`)
+- **Canvas-based rendering** with React Konva for high-performance graphics
+- **Zustand state management** for reactive, centralized state handling
+- Interactive story player component (`<FablePlayer />`) with Stage/Layer architecture
+- Real-time state management (variables, page navigation) via Zustand store
 - Expression evaluation engine (arithmetic, logic, comparisons)
-- Event handling system (click, hover, drag, drop)
-- Agent rendering: text, buttons, images with positioning
-- React-based component library
-- TypeScript support and declarations
+- Event handling system (click, hover, drag, drop) with Konva events
+- Agent rendering: text, buttons, images with canvas positioning
+- **React 19** compatibility with optimized re-renders
+- **TypeScript** support with full type safety
+- **Tree-shakable** ESM/CJS builds for optimal bundle sizes
+
+**Architecture Benefits:**
+- **GPU-accelerated rendering** for smooth animations and interactions
+- **Memory efficient** for complex scenes with many agents
+- **Consistent positioning** using canvas coordinates
+- **Hardware acceleration** for better performance on mobile devices
+- **Scalable vector graphics** that look crisp at any resolution
 
 ### 🚧 Planned Features
 - **Audio Controller**: music, play_sound, stop_music, stop_sound
 - **Animation System**: animate, move, stop_animation with easing
 - **Timing Controls**: wait, timer, auto_advance page options
 - **Video Agent**: video rendering with controls
-- **Advanced Event Handling**: on_drag, on_drop for all agents
+- **Advanced Event Handling**: touch gestures, multi-touch support
 
 ## Installation
 
@@ -295,22 +305,23 @@ fable-js/
 │   │   ├── tests/
 │   │   │   └── parser.test.mjs    # Parser test suite (44 tests)
 │   │   └── package.json
-│   └── runtime/                   # @fable-js/runtime
+│   └── runtime/                   # @fable-js/runtime (Canvas-based)
 │       ├── src/
-│       │   ├── index.js           # Main exports
+│       │   ├── index.js           # Main exports (ESM entry)
 │       │   ├── index.d.ts         # TypeScript declarations
+│       │   ├── store/
+│       │   │   └── RuntimeStore.ts # Zustand state management
 │       │   ├── engine/
-│       │   │   ├── FableState.ts      # State management
 │       │   │   └── ExpressionEvaluator.ts # Math/logic evaluation
 │       │   └── components/
-│       │       ├── FablePlayer.tsx    # Main player component
-│       │       ├── FableText.tsx      # Text agent
-│       │       ├── FableButton.tsx    # Button agent
-│       │       └── FableImage.tsx     # Image agent
+│       │       ├── FablePlayer.tsx    # Main Konva Stage component
+│       │       ├── FableText.tsx      # Konva Text agent
+│       │       ├── FableButton.tsx    # Konva Rect+Text button
+│       │       └── FableImage.tsx     # Konva Image agent
 │       ├── tests/
 │       │   └── runtime.test.js    # Runtime test suite
-│       ├── dist/                 # Built distribution files
-│       └── package.json
+│       ├── dist/                 # Built ESM/CJS bundles
+│       └── package.json          # React Konva + Zustand deps
 ├── turbo.json                     # Turborepo pipeline configuration
 ├── pnpm-workspace.yaml            # Workspace configuration
 └── package.json                   # Root workspace config
@@ -377,28 +388,52 @@ Returns the raw Ohm grammar object for advanced use cases (extending, custom sem
 
 ### Runtime API (`@fable-js/runtime`)
 
-#### `<FablePlayer ast={ast} className? style? />`
+#### `<FablePlayer ast={ast} width? height? className? style? onStateChange? />`
 
-Main React component that renders and executes interactive stories.
+Main React Konva component that renders interactive stories on HTML5 Canvas.
 
 **Props:**
 - `ast`: Parsed AST from `@fable-js/parser`
-- `className?`: Additional CSS classes
-- `style?`: Inline styles (overrides defaults)
+- `width?`: Canvas width (default: 800)
+- `height?`: Canvas height (default: 600)
+- `className?`: Container CSS classes
+- `style?`: Container inline styles
+- `onStateChange?`: Callback for state changes
 
 **Features:**
-- State management for variables and page navigation
-- Real-time expression evaluation
-- Event handling for interactive agents
-- Automatic agent rendering with positioning
+- Canvas-based rendering with Konva Stage/Layer architecture
+- Zustand-powered reactive state management
+- Real-time expression evaluation and variable interpolation
+- Konva event system for interactive agents (click, hover, drag)
+- Automatic canvas positioning and rendering
+
+#### Zustand Store
+
+##### `useRuntimeStore()`
+Centralized state management hook for story runtime.
+
+**State:**
+```typescript
+{
+  ast: Fable | null;
+  currentPage: number;
+  pageHistory: number[];
+  variables: Map<string, any>;
+  evaluator: ExpressionEvaluator | null;
+}
+```
+
+**Actions:**
+- `setAst(ast)` - Initialize story
+- `goToPage(pageId)` - Navigate pages
+- `setVariable(name, value)` - Update variables
+- `executeStatements(statements)` - Run DSL statements
+- `getState()` - Get current state snapshot
 
 #### Engine Classes
 
-##### `FableState`
-Manages story state, variables, and page navigation.
-
 ##### `ExpressionEvaluator`
-Evaluates arithmetic, comparison, and logical expressions in real-time.
+Evaluates arithmetic (`+`, `-`, `*`, `/`, `%`), comparison (`==`, `!=`, `<`, `>`, `<=`, `>=`), and logical (`&&`, `||`, `!`) expressions with variable interpolation.
 
 ## References
 

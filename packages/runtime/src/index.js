@@ -1,8 +1,10 @@
 // Main exports
 export { FablePlayer } from './components/FablePlayer.tsx';
 
-// Engine classes
-export { FableState } from './engine/FableState.ts';
+// Zustand store
+export { useRuntimeStore } from './store/RuntimeStore.ts';
+
+// Engine classes (for advanced use cases)
 export { ExpressionEvaluator } from './engine/ExpressionEvaluator.ts';
 
 // Individual components (for advanced use cases)

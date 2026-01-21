@@ -1,19 +1,24 @@
 import React from 'react';
+import { Rect, Text, Group } from 'react-konva';
 import type { ButtonAgent, InterpolatedString, Agent } from '@fable-js/parser';
-import type { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js';
+import { useRuntimeStore } from '../store/RuntimeStore.js';
 
 export interface FableButtonProps {
   agent: ButtonAgent;
-  evaluator: ExpressionEvaluator;
   onEvent: (event: string, agent: Agent) => void;
 }
 
 /**
- * Button agent component with React 19 optimizations
+ * Button agent component using Konva Rect + Text for canvas rendering
  */
-export function FableButton({ agent, evaluator, onEvent }: FableButtonProps) {
+export function FableButton({ agent, onEvent }: FableButtonProps) {
+  const { evaluator } = useRuntimeStore();
+  const [isHovered, setIsHovered] = React.useState(false);
+
   // Memoize label evaluation
   const label = React.useMemo(() => {
+    if (!evaluator) return 'Button';
+
     if (agent.label && typeof agent.label === 'object' && 'type' in agent.label) {
       const interpolated = agent.label as InterpolatedString;
       if (interpolated.type === 'interpolated_string') {
@@ -23,37 +28,56 @@ export function FableButton({ agent, evaluator, onEvent }: FableButtonProps) {
     return agent.label || 'Button';
   }, [agent.label, evaluator]);
 
-  const style: React.CSSProperties = {
-    position: 'absolute',
-    left: agent.position?.[0] || 0,
-    top: agent.position?.[1] || 0,
-    padding: '8px 16px',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontFamily: 'Arial, sans-serif'
-  };
+  const x = agent.position?.[0] || 0;
+  const y = agent.position?.[1] || 0;
+  const width = 120;
+  const height = 40;
 
-  // Memoize event handlers to prevent unnecessary re-creation
-  const handleClick = React.useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  // Calculate text position to center it in the button
+  const textX = x + width / 2;
+  const textY = y + height / 2;
+
+  const handleClick = React.useCallback(() => {
     onEvent('on_click', agent);
   }, [onEvent, agent]);
 
-  const handleHover = React.useCallback(() => {
+  const handleMouseEnter = React.useCallback(() => {
+    setIsHovered(true);
     onEvent('on_hover', agent);
   }, [onEvent, agent]);
 
+  const handleMouseLeave = React.useCallback(() => {
+    setIsHovered(false);
+  }, []);
+
   return (
-    <button
-      style={style}
-      onClick={handleClick}
-      onMouseEnter={handleHover}
-    >
-      {label}
-    </button>
+    <Group>
+      <Rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={isHovered ? '#45a049' : '#4CAF50'}
+        stroke="#000000"
+        strokeWidth={1}
+        cornerRadius={4}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      />
+      <Text
+        x={textX}
+        y={textY}
+        text={label}
+        fontSize={14}
+        fontFamily="Arial, sans-serif"
+        fill="#ffffff"
+        align="center"
+        verticalAlign="middle"
+        offsetX={label.length * 3.5} // Approximate center alignment
+        offsetY={7}
+        listening={false}
+      />
+    </Group>
   );
 }

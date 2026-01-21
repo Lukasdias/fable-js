@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "React runtime engine for FableJS interactive storytelling",
   "type": "module",
-  "main": "src/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "src/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.js",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
       "types": "./src/index.d.ts"
     }
   },
@@ -29,7 +32,10 @@
   "dependencies": {
     "@fable-js/parser": "workspace:*",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-konva": "^19.0.0",
+    "konva": "^9.3.0",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.0.0",

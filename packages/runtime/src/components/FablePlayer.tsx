@@ -1,64 +1,61 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import type { Fable, Agent, Event, Statement } from '@fable-js/parser';
-import { FableState } from '../engine/FableState.js';
-import { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js';
-import { FableText } from './FableText.jsx';
-import { FableButton } from './FableButton.jsx';
-import { FableImage } from './FableImage.jsx';
+import React, { useEffect, useCallback } from 'react';
+import { Stage, Layer } from 'react-konva';
+import type { Fable, Agent, Event } from '@fable-js/parser';
+import { useRuntimeStore } from '../store/RuntimeStore.js';
+import { FableText } from './FableText.js';
+import { FableButton } from './FableButton.js';
+import { FableImage } from './FableImage.js';
 
 export interface FablePlayerProps {
   ast: Fable;
+  width?: number;
+  height?: number;
   className?: string;
   style?: React.CSSProperties;
-  onStateChange?: (state: ReturnType<FableState['getState']>) => void;
+  onStateChange?: (state: { currentPage: number; variables: Record<string, any>; pageHistory: number[] }) => void;
 }
 
 /**
- * Main FableJS player component with React 19 optimizations
- * Uses startTransition for non-urgent updates and optimized re-renders
+ * Main FableJS player component using Konva canvas rendering
+ * Uses Zustand for state management with optimized re-renders
  */
-export function FablePlayer({ ast, className = '', style = {}, onStateChange }: FablePlayerProps) {
-  // Memoize state and evaluator to prevent unnecessary re-creation
-  const state = useMemo(() => new FableState(ast), [ast]);
-  const evaluator = useMemo(() => new ExpressionEvaluator(state), [state]);
+export function FablePlayer({
+  ast,
+  width = 800,
+  height = 600,
+  className = '',
+  style = {},
+  onStateChange
+}: FablePlayerProps) {
+  const {
+    setAst,
+    getCurrentPage,
+    executeStatements,
+    getState,
+  } = useRuntimeStore();
 
-  // State for triggering re-renders when story state changes
-  const [stateVersion, setStateVersion] = useState(0);
+  // Initialize story when AST changes
+  useEffect(() => {
+    setAst(ast);
+  }, [ast, setAst]);
+
+  // Execute current page statements when page changes
+  useEffect(() => {
+    const currentPage = getCurrentPage();
+    if (currentPage && currentPage.statements) {
+      executeStatements(currentPage.statements);
+    }
+  }, [getCurrentPage, executeStatements]);
 
   // Notify parent of state changes
   useEffect(() => {
-    onStateChange?.(state.getState());
-  }, [state, stateVersion, onStateChange]);
+    if (onStateChange) {
+      onStateChange(getState());
+    }
+  }, [getState, onStateChange]);
 
-  // Execute statements with React 19 startTransition for non-urgent updates
-  const executeStatements = useCallback((statements: any[]) => {
-    if (!statements) return;
-
-    // Use React.startTransition for non-urgent state updates
-    React.startTransition(() => {
-      statements.forEach((stmt: any) => {
-        switch (stmt.type) {
-          case 'set':
-            const value = evaluator.evaluate(stmt.value);
-            state.setVariable(stmt.variable, value);
-            break;
-
-          case 'go_to_page':
-            state.goToPage(stmt.pageId);
-            break;
-
-          default:
-            console.warn('Unknown statement type:', stmt.type);
-        }
-      });
-
-      // Trigger re-render
-      setStateVersion(prev => prev + 1);
-    });
-  }, [state, evaluator]);
-
-  // Handle events with proper typing
-  const handleEvent = useCallback((event: Event['type'], agent: Agent) => {
+  // Handle events with Zustand store
+  const handleEvent = useCallback((event: string, agent: Agent) => {
     if (!('events' in agent)) return;
 
     const eventHandler = agent.events?.find((e: Event) => e.type === event);
@@ -67,56 +64,59 @@ export function FablePlayer({ ast, className = '', style = {}, onStateChange }: 
     }
   }, [executeStatements]);
 
-  // Initialize page statements
-  useEffect(() => {
-    const currentPage = state.getCurrentPage();
-    if (currentPage && currentPage.statements) {
-      executeStatements(currentPage.statements);
-    }
-  }, [state, executeStatements]);
-
-  const currentPage = state.getCurrentPage();
+  const currentPage = getCurrentPage();
   if (!currentPage) {
-    return <div className="fable-error">Page not found: {state.getState().currentPage}</div>;
+    return (
+      <div
+        className={`fable-player ${className}`}
+        style={{
+          width,
+          height,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f0f0f0',
+          border: '1px solid #ccc',
+          ...style
+        }}
+      >
+        <div className="text-center">
+          <p className="text-muted-foreground">Page not found</p>
+        </div>
+      </div>
+    );
   }
-
-  // Memoize agent rendering for performance
-  const renderedAgents = useMemo(() => {
-    return currentPage.agents?.map(agent => {
-      const key = 'id' in agent ? agent.id : Math.random();
-      const props = {
-        agent: agent as any,
-        evaluator,
-        onEvent: handleEvent
-      };
-
-      switch (agent.type) {
-        case 'text':
-          return <FableText key={key} {...(props as any)} />;
-        case 'button':
-          return <FableButton key={key} {...(props as any)} />;
-        case 'image':
-          return <FableImage key={key} {...(props as any)} />;
-        default:
-          console.warn('Unknown agent type:', agent.type);
-          return null;
-      }
-    }) || [];
-  }, [currentPage.agents, evaluator, handleEvent]);
 
   return (
     <div
       className={`fable-player ${className}`}
       style={{
-        position: 'relative',
-        width: '800px',
-        height: '600px',
-        overflow: 'hidden',
-        backgroundColor: '#f0f0f0',
+        width,
+        height,
+        border: '1px solid #ccc',
         ...style
       }}
     >
-      {renderedAgents}
+      <Stage width={width} height={height}>
+        <Layer>
+          {/* Render agents */}
+          {currentPage.agents?.map(agent => {
+            const key = 'id' in agent ? agent.id : Math.random();
+
+            switch (agent.type) {
+              case 'text':
+                return <FableText key={key} agent={agent as any} />;
+              case 'button':
+                return <FableButton key={key} agent={agent as any} onEvent={handleEvent} />;
+              case 'image':
+                return <FableImage key={key} agent={agent as any} onEvent={handleEvent} />;
+              default:
+                console.warn('Unknown agent type:', agent.type);
+                return null;
+            }
+          })}
+        </Layer>
+      </Stage>
     </div>
   );
 }

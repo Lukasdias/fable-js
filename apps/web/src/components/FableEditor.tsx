@@ -124,16 +124,18 @@ export function FableEditor() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex flex-col lg:flex-row">
         {!isPlaying ? (
-          // Editor Mode
-          <div className="flex-1 flex">
-            {/* Editor Pane */}
-            <div className="flex-1 flex flex-col">
-              <div className="border-b px-4 py-2 bg-muted/50">
+          <>
+            {/* Editor Pane - Takes 60% on large screens */}
+            <div className="flex-1 lg:flex-[3] flex flex-col min-h-0">
+              <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
                 <h2 className="text-sm font-medium">DSL Editor</h2>
+                <div className="text-xs text-muted-foreground">
+                  {dsl.split('\n').length} lines
+                </div>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-h-0">
                 <MonacoEditor
                   height="100%"
                   language="fable"
@@ -149,43 +151,55 @@ export function FableEditor() {
                     wordWrap: 'on',
                     tabSize: 2,
                     insertSpaces: true,
+                    wordWrapColumn: 80,
+                    rulers: [80],
                   }}
                 />
               </div>
             </div>
 
-            <Separator orientation="vertical" />
+            <Separator orientation="vertical" className="hidden lg:block" />
 
-            {/* Preview Pane */}
-            <div className="w-96 flex flex-col">
-              <div className="border-b px-4 py-2 bg-muted/50">
+            {/* Preview Pane - Takes 40% on large screens, full width on mobile */}
+            <div className="lg:flex-[2] flex flex-col min-h-0 border-t lg:border-t-0 lg:border-l">
+              <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
                 <h2 className="text-sm font-medium">Live Preview</h2>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-muted-foreground">
+                    {ast ? `${ast.pages.length} page${ast.pages.length !== 1 ? 's' : ''}` : 'No story'}
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 p-4 bg-muted/20">
+              <div className="flex-1 min-h-0 p-4 bg-muted/10 flex items-center justify-center">
                 {ast ? (
-                  <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-                    <FablePlayer ast={ast} />
+                  <div className="w-full max-w-lg aspect-video border rounded-lg overflow-hidden bg-white shadow-lg">
+                    <FablePlayer ast={ast} width={640} height={360} />
                   </div>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                  <div className="text-center">
                     {error ? (
-                      <div className="text-center">
-                        <AlertCircle className="h-8 w-8 mx-auto mb-2 text-destructive" />
-                        <p className="text-sm">Parse error in DSL</p>
-                      </div>
+                      <>
+                        <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
+                        <p className="text-sm text-muted-foreground mb-2">Parse error in DSL</p>
+                        <p className="text-xs text-destructive font-mono max-w-md">{error.split('\n')[0]}</p>
+                      </>
                     ) : (
-                      <p className="text-sm">Enter DSL to see preview</p>
+                      <>
+                        <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">Enter valid DSL to see preview</p>
+                        <p className="text-xs text-muted-foreground mt-2">The preview will update automatically</p>
+                      </>
                     )}
                   </div>
                 )}
               </div>
             </div>
-          </div>
+          </>
         ) : (
           // Fullscreen Preview Mode
           <div className="flex-1 flex items-center justify-center bg-muted/20 p-8">
-            <div className="w-full max-w-4xl aspect-video border rounded-lg overflow-hidden bg-white shadow-lg">
-              {ast && <FablePlayer ast={ast} />}
+            <div className="w-full max-w-6xl aspect-video border rounded-lg overflow-hidden bg-white shadow-2xl">
+              {ast && <FablePlayer ast={ast} width={1280} height={720} />}
             </div>
           </div>
         )}

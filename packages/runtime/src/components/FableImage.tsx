@@ -1,4 +1,6 @@
 import React from 'react';
+import { Image } from 'react-konva';
+import Konva from 'konva';
 import type { ImageAgent, Agent } from '@fable-js/parser';
 
 export interface FableImageProps {
@@ -7,41 +9,43 @@ export interface FableImageProps {
 }
 
 /**
- * Image agent component with React 19 optimizations
+ * Image agent component using Konva Image for canvas rendering
  */
 export function FableImage({ agent, onEvent }: FableImageProps) {
-  const style: React.CSSProperties = {
-    position: 'absolute',
-    left: agent.position?.[0] || 0,
-    top: agent.position?.[1] || 0,
-    maxWidth: '100%',
-    maxHeight: '100%',
-    pointerEvents: 'auto'
-  };
+  const [image, setImage] = React.useState<HTMLImageElement | null>(null);
 
-  // Memoize event handlers
-  const handleDragStart = React.useCallback((e: React.DragEvent<HTMLImageElement>) => {
-    onEvent('on_drag', agent);
+  // Load image when src changes
+  React.useEffect(() => {
+    if (!agent.src) return;
+
+    const img = new window.Image();
+    img.src = agent.src;
+    img.onload = () => {
+      setImage(img);
+    };
+    img.onerror = () => {
+      console.warn('Failed to load image:', agent.src);
+    };
+  }, [agent.src]);
+
+  const handleClick = React.useCallback(() => {
+    onEvent('on_click', agent);
   }, [onEvent, agent]);
 
-  const handleDrop = React.useCallback((e: React.DragEvent<HTMLImageElement>) => {
-    e.preventDefault();
-    onEvent('on_drop', agent);
+  const handleMouseEnter = React.useCallback(() => {
+    onEvent('on_hover', agent);
   }, [onEvent, agent]);
-
-  const handleDragOver = React.useCallback((e: React.DragEvent<HTMLImageElement>) => {
-    e.preventDefault();
-  }, []);
 
   return (
-    <img
-      src={agent.src}
-      alt=""
-      style={style}
+    <Image
+      x={agent.position?.[0] || 0}
+      y={agent.position?.[1] || 0}
+      image={image || undefined}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
       draggable={true}
-      onDragStart={handleDragStart}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
+      onDragStart={() => onEvent('on_drag', agent)}
+      onDragEnd={() => onEvent('on_drop', agent)}
     />
   );
 }
