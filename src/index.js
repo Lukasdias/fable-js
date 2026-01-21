@@ -32,12 +32,8 @@ import { dirname, join } from 'path';
  * console.log(ast.pages[0].agents[0].content); // "Hello World"
  * ```
  */
-export function parseDSL(source) {
-  // Reset agent ID counter for each parse
-  resetAgentIdCounter();
-
-  // Hardcoded grammar to avoid file caching issues
-  const grammar = ohm.grammar(String.raw`
+// Hardcoded grammar to avoid file caching issues
+const grammar = ohm.grammar(String.raw`
 FableDSL {
   // =========== Top Level ===========
   Fable = "fable" StringLiteral "do" FableContent* "end"
@@ -112,7 +108,20 @@ FableDSL {
   Range = NumberLiteral ".." NumberLiteral
 
   // =========== Expressions ===========
-  Expression = RandomExpr | PickOneExpr | NumberLiteral | BooleanLiteral | StringLiteral | identifier
+  Expression = AddExpr
+  AddExpr = AddExpr "+" MulExpr  -- plus
+           | AddExpr "-" MulExpr  -- minus
+           | MulExpr
+  MulExpr = MulExpr "*" PrimaryExpr  -- times
+           | MulExpr "/" PrimaryExpr  -- div
+           | PrimaryExpr
+  PrimaryExpr = "(" Expression ")"  -- paren
+               | RandomExpr
+               | PickOneExpr
+               | NumberLiteral
+               | BooleanLiteral
+               | StringLiteral
+               | identifier
   RandomExpr = "random" Range
   PickOneExpr = "pick_one" List
    List = "[" ListItems "]"
@@ -134,13 +143,17 @@ FableDSL {
 }
   `);
 
+export function parseDSL(source) {
+  // Reset agent ID counter for each parse
+  resetAgentIdCounter();
+  
   const matchResult = grammar.match(source);
-
+  
   if (matchResult.failed()) {
     // Ohm provides excellent error messages with line/column info
     throw new Error(matchResult.message);
   }
-
+  
   const semantics = createSemantics(grammar);
   return semantics(matchResult).toAST();
 }

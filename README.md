@@ -9,6 +9,8 @@ A DSL parser for interactive storytelling applications. Built with Ohm.js for pa
 - Interactive events: on_click, on_hover, on_drag, on_drop
 - Control structures: if (conditional), for (loop with ranges)
 - Variables & State: set, add, subtract operations
+- Arithmetic Expressions: +, -, *, / with operator precedence
+- String Operations: concatenation with +
 - String Interpolation: {variable} syntax in text
 - Audio: music, play_sound, stop_music actions
 - Timing: wait, timer, auto_advance page options
@@ -35,21 +37,12 @@ const dsl = `
     page 1 do
       set score to 0
       text "Score: {score}" at [100, 100]
-      button "Click me!" at [200, 200] do
+      button "Add Points" at [200, 200] do
         on_click do
-          add 10 to score
-          play_sound "click.wav"
+          set score to score + 10
+          set message to "Great job!" + " Keep going!"
         end
       end
-      button "Next" at [300, 300] do
-        on_click do
-          go_to_page 2
-        end
-      end
-    end
-    page 2 auto_advance 3s do
-      text "The End - Final Score: {score}" at [100, 100]
-      music "victory.mp3" loop volume 0.8
     end
   end
 `;
@@ -81,31 +74,51 @@ The DSL uses a PEG-based grammar defined in `src/grammar/fable.ohm`. You can vis
 fable "Interactive Story" do
   page 1 do
     // Comments are supported
-    text "Welcome!" at [100, 100]
+    set health to 100
+    set bonus to random 1..10
+    set name to pick_one ["Hero", "Warrior", "Mage"]
+    text "Welcome {name}! Health: {health}" at [100, 100]
     image "bg.jpg" at [0, 0]
     video "intro.mp4" at [50, 50]
 
-    button "Start" at [200, 200] do
+    button "Attack" at [200, 200] do
       on_click do
-        go_to_page 2
+        set damage to 10 + bonus
+        set health to health - damage
+        set message to "You took " + damage + " damage!"
+        if health <= 0 do
+          go_to_page 3
+        end
       end
     end
 
-    button "No Events" at [300, 300] do
-      // Buttons always need "do end" block
+    button "Heal" at [300, 200] do
+      on_click do
+        set heal_amount to health * 0.2
+        set health to health + heal_amount
+      end
     end
 
-    if "health > 50" do
+    if health > 50 do
       text "You're strong!" at [150, 150]
     end
 
-    for i in 0..5 do
-      image "tile.png" at [100, 100]
+    for i in 1..3 do
+      button "Choice {i}" at [100, 200 + i * 50] do
+        on_click do
+          set choice to i
+          go_to_page 2
+        end
+      end
     end
   end
 
   page 2 do
-    text "Page 2" at [100, 100]
+    text "You chose option {choice}" at [100, 100]
+  end
+
+  page 3 do
+    text "Game Over" at [100, 100]
   end
 end
 ```
@@ -120,14 +133,14 @@ end
     {
       type: 'page',
       id: 1,
-      autoAdvance: 3000, // in milliseconds
       agents: [
-        { type: 'set', variable: 'health', value: { type: 'number', value: 100 } },
         { type: 'text', id: 1, content: { type: 'interpolated_string', parts: ['Welcome ', { type: 'variable', name: 'name' }, '!'] }, position: [100, 100] },
-        { type: 'button', id: 2, label: 'Attack', position: [200, 200], animate: { animation: 'pulse', duration: 2000 }, events: [...] },
-        { type: 'play_sound', src: 'sword.wav', volume: 0.7 },
-        { type: 'if', condition: 'health <= 0', agents: [{ type: 'go_to_page', target: 3 }] },
-        { type: 'for', variable: 'i', range: { start: 1, end: 3 }, agents: [...] }
+        { type: 'image', id: 2, src: 'bg.jpg', position: [0, 0] },
+        { type: 'button', id: 3, label: 'Attack', position: [200, 200], events: [...] }
+      ],
+      statements: [
+        { type: 'set', variable: 'health', value: { type: 'number', value: 100 } },
+        { type: 'set', variable: 'damage', value: { type: 'binary_op', operator: '-', left: { type: 'variable', name: 'health' }, right: { type: 'binary_op', operator: '+', left: { type: 'number', value: 10 }, right: { type: 'variable', name: 'bonus' } } } }
       ]
     }
   ]

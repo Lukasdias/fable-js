@@ -354,6 +354,46 @@ export function createSemantics(grammar) {
     },
 
     // Expressions
+    AddExpr_plus(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '+',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    AddExpr_minus(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '-',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    MulExpr_times(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '*',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    MulExpr_div(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '/',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    PrimaryExpr_paren(_lparen, expr, _rparen) {
+      return expr.toAST();
+    },
+
     RandomExpr(_random, range) {
       return {
         type: 'random',
@@ -364,7 +404,7 @@ export function createSemantics(grammar) {
     PickOneExpr(_pickOne, list) {
       return {
         type: 'pick_one',
-        options: list.toAST().map(item => item.value) // Extract string values
+        list: list.toAST().map(item => item.value)
       };
     },
 

@@ -503,10 +503,29 @@ describe('FableJS DSL Parser', () => {
     it('should parse random expressions', () => {
       const dsl = `
         fable "Test" do
-          set dice to random 1..6
+          page 1 do
+            set result to random 1..10
+          end
+        end
+      `;
+
+      const ast = parseDSL(dsl);
+      const statement = ast.pages[0].statements[0];
+
+      expect(statement.type).toBe('set');
+      expect(statement.variable).toBe('result');
+      expect(statement.value).toEqual({
+        type: 'random',
+        range: { start: 1, end: 10 }
+      });
+    });
+
+    it('should parse pick_one expressions', () => {
+      const dsl = `
+        fable "Test" do
           set color to pick_one ["red", "blue", "green"]
           page 1 do
-            text "Done" at [100, 100]
+            text "Start" at [100, 100]
           end
         end
       `;
@@ -515,19 +534,60 @@ describe('FableJS DSL Parser', () => {
 
       expect(ast.statements[0]).toEqual({
         type: 'set',
-        variable: 'dice',
-        value: {
-          type: 'random',
-          range: { start: 1, end: 6 }
-        }
-      });
-      expect(ast.statements[1]).toEqual({
-        type: 'set',
         variable: 'color',
         value: {
           type: 'pick_one',
-          options: ['red', 'blue', 'green']
+          list: ['red', 'blue', 'green']
         }
+      });
+    });
+
+    it('should parse arithmetic expressions', () => {
+      const dsl = `
+        fable "Test" do
+          page 1 do
+            set result to 5 + 3 * 2
+          end
+        end
+      `;
+
+      const ast = parseDSL(dsl);
+      const statement = ast.pages[0].statements[0];
+
+      expect(statement.type).toBe('set');
+      expect(statement.variable).toBe('result');
+      expect(statement.value).toEqual({
+        type: 'binary_op',
+        operator: '+',
+        left: { type: 'number', value: 5 },
+        right: {
+          type: 'binary_op',
+          operator: '*',
+          left: { type: 'number', value: 3 },
+          right: { type: 'number', value: 2 }
+        }
+      });
+    });
+
+    it('should parse string concatenation', () => {
+      const dsl = `
+        fable "Test" do
+          page 1 do
+            set greeting to "Hello" + " World"
+          end
+        end
+      `;
+
+      const ast = parseDSL(dsl);
+      const statement = ast.pages[0].statements[0];
+
+      expect(statement.type).toBe('set');
+      expect(statement.variable).toBe('greeting');
+      expect(statement.value).toEqual({
+        type: 'binary_op',
+        operator: '+',
+        left: { type: 'string', value: 'Hello' },
+        right: { type: 'string', value: 'World' }
       });
     });
   });
