@@ -7,9 +7,6 @@
 
 import * as ohm from 'ohm-js';
 import { createSemantics, resetAgentIdCounter } from './semantics/toAST.js';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 
 /**
  * Parse FableDSL source code into an AST
@@ -108,14 +105,27 @@ FableDSL {
   Range = NumberLiteral ".." NumberLiteral
 
   // =========== Expressions ===========
-  Expression = AddExpr
+  Expression = LogicalExpr
+  LogicalExpr = LogicalExpr "||" AndExpr  -- or
+               | AndExpr
+  AndExpr = AndExpr "&&" CompExpr  -- and
+           | CompExpr
+  CompExpr = CompExpr "==" AddExpr  -- equal
+            | CompExpr "!=" AddExpr  -- not_equal
+            | CompExpr "<" AddExpr   -- less
+            | CompExpr ">" AddExpr   -- greater
+            | CompExpr "<=" AddExpr  -- less_equal
+            | CompExpr ">=" AddExpr  -- greater_equal
+            | AddExpr
   AddExpr = AddExpr "+" MulExpr  -- plus
            | AddExpr "-" MulExpr  -- minus
            | MulExpr
   MulExpr = MulExpr "*" PrimaryExpr  -- times
            | MulExpr "/" PrimaryExpr  -- div
+           | MulExpr "%" PrimaryExpr  -- mod
            | PrimaryExpr
-  PrimaryExpr = "(" Expression ")"  -- paren
+  PrimaryExpr = "!" PrimaryExpr      -- not
+               | "(" Expression ")"  -- paren
                | RandomExpr
                | PickOneExpr
                | NumberLiteral
@@ -165,10 +175,6 @@ export function parseDSL(source) {
  * @returns {{ valid: boolean, error?: string }} Validation result
  */
 export function validateDSL(source) {
-  // Load grammar fresh each time to avoid caching issues
-  const grammarSource = readFileSync(join(__dirname, 'grammar/fable.ohm'), 'utf-8');
-  const grammar = ohm.grammar(grammarSource);
-
   const matchResult = grammar.match(source);
 
   if (matchResult.succeeded()) {

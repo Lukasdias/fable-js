@@ -354,6 +354,78 @@ export function createSemantics(grammar) {
     },
 
     // Expressions
+    LogicalExpr_or(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '||',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    AndExpr_and(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '&&',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    CompExpr_equal(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '==',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    CompExpr_not_equal(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '!=',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    CompExpr_less(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '<',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    CompExpr_greater(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '>',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    CompExpr_less_equal(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '<=',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    CompExpr_greater_equal(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '>=',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
     AddExpr_plus(left, _op, right) {
       return {
         type: 'binary_op',
@@ -387,6 +459,23 @@ export function createSemantics(grammar) {
         operator: '/',
         left: left.toAST(),
         right: right.toAST()
+      };
+    },
+
+    MulExpr_mod(left, _op, right) {
+      return {
+        type: 'binary_op',
+        operator: '%',
+        left: left.toAST(),
+        right: right.toAST()
+      };
+    },
+
+    PrimaryExpr_not(_op, expr) {
+      return {
+        type: 'unary_op',
+        operator: '!',
+        operand: expr.toAST()
       };
     },
 

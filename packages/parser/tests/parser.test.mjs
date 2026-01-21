@@ -590,6 +590,154 @@ describe('FableJS DSL Parser', () => {
         right: { type: 'string', value: 'World' }
       });
     });
+
+    it('should parse comparison operators', () => {
+      const dsl = `
+        fable "Test" do
+          page 1 do
+            set is_high_score to score > 100
+            set is_equal to count == 5
+            set is_different to name != "Player"
+          end
+        end
+      `;
+
+      const ast = parseDSL(dsl);
+      const statements = ast.pages[0].statements;
+
+      expect(statements[0].value).toEqual({
+        type: 'binary_op',
+        operator: '>',
+        left: { type: 'variable', name: 'score' },
+        right: { type: 'number', value: 100 }
+      });
+
+      expect(statements[1].value).toEqual({
+        type: 'binary_op',
+        operator: '==',
+        left: { type: 'variable', name: 'count' },
+        right: { type: 'number', value: 5 }
+      });
+
+      expect(statements[2].value).toEqual({
+        type: 'binary_op',
+        operator: '!=',
+        left: { type: 'variable', name: 'name' },
+        right: { type: 'string', value: 'Player' }
+      });
+    });
+
+    it('should parse logical operators', () => {
+      const dsl = `
+        fable "Test" do
+          page 1 do
+            set can_attack to health > 0 && mana >= 10
+            set should_flee to health < 20 || enemy_count > 5
+            set is_dead to !is_alive
+          end
+        end
+      `;
+
+      const ast = parseDSL(dsl);
+      const statements = ast.pages[0].statements;
+
+      expect(statements[0].value).toEqual({
+        type: 'binary_op',
+        operator: '&&',
+        left: {
+          type: 'binary_op',
+          operator: '>',
+          left: { type: 'variable', name: 'health' },
+          right: { type: 'number', value: 0 }
+        },
+        right: {
+          type: 'binary_op',
+          operator: '>=',
+          left: { type: 'variable', name: 'mana' },
+          right: { type: 'number', value: 10 }
+        }
+      });
+
+      expect(statements[1].value).toEqual({
+        type: 'binary_op',
+        operator: '||',
+        left: {
+          type: 'binary_op',
+          operator: '<',
+          left: { type: 'variable', name: 'health' },
+          right: { type: 'number', value: 20 }
+        },
+        right: {
+          type: 'binary_op',
+          operator: '>',
+          left: { type: 'variable', name: 'enemy_count' },
+          right: { type: 'number', value: 5 }
+        }
+      });
+
+      expect(statements[2].value).toEqual({
+        type: 'unary_op',
+        operator: '!',
+        operand: { type: 'variable', name: 'is_alive' }
+      });
+    });
+
+    it('should parse modulus operator', () => {
+      const dsl = `
+        fable "Test" do
+          page 1 do
+            set remainder to score % 10
+          end
+        end
+      `;
+
+      const ast = parseDSL(dsl);
+      const statement = ast.pages[0].statements[0];
+
+      expect(statement.type).toBe('set');
+      expect(statement.variable).toBe('remainder');
+      expect(statement.value).toEqual({
+        type: 'binary_op',
+        operator: '%',
+        left: { type: 'variable', name: 'score' },
+        right: { type: 'number', value: 10 }
+      });
+    });
+
+    it('should handle operator precedence', () => {
+      const dsl = `
+        fable "Test" do
+          page 1 do
+            set result to 2 + 3 * 4 == 14 && true
+          end
+        end
+      `;
+
+      const ast = parseDSL(dsl);
+      const statement = ast.pages[0].statements[0];
+
+      expect(statement.value).toEqual({
+        type: 'binary_op',
+        operator: '&&',
+        left: {
+          type: 'binary_op',
+          operator: '==',
+          left: {
+            type: 'binary_op',
+            operator: '+',
+            left: { type: 'number', value: 2 },
+            right: {
+              type: 'binary_op',
+              operator: '*',
+              left: { type: 'number', value: 3 },
+              right: { type: 'number', value: 4 }
+            }
+          },
+          right: { type: 'number', value: 14 }
+        },
+        right: { type: 'boolean', value: true }
+      });
+    });
   });
 
   describe('String Interpolation', () => {

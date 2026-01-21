@@ -1,15 +1,18 @@
-# FableJS DSL Parser
+# FableJS
 
-A DSL parser for interactive storytelling applications. Built with Ohm.js for parsing expression grammar (PEG) based syntax.
+A complete interactive storytelling framework with DSL parser and React runtime engine. Built with Ohm.js for parsing expression grammar (PEG) based syntax and React for rendering interactive stories.
 
 ## Features
 
+### DSL Parser (`@fable-js/parser`)
 - Ruby-like syntax with do/end blocks
 - Visual agents: text, button, image, video (with positions)
 - Interactive events: on_click, on_hover, on_drag, on_drop
 - Control structures: if (conditional), for (loop with ranges)
 - Variables & State: set, add, subtract operations
-- Arithmetic Expressions: +, -, *, / with operator precedence
+- Arithmetic Expressions: +, -, *, /, % with operator precedence
+- Comparison Operators: ==, !=, <, >, <=, >=
+- Logical Operators: &&, ||, !
 - String Operations: concatenation with +
 - String Interpolation: {variable} syntax in text
 - Audio: music, play_sound, stop_music actions
@@ -21,13 +24,47 @@ A DSL parser for interactive storytelling applications. Built with Ohm.js for pa
 - TypeScript support with full type definitions
 - ESM package structure suitable for monorepo integration
 
+### React Runtime (`@fable-js/runtime`)
+- Interactive story player component (`<FablePlayer />`)
+- Real-time state management (variables, page navigation)
+- Expression evaluation engine (arithmetic, logic, comparisons)
+- Event handling system (click, hover, drag, drop)
+- Agent rendering: text, buttons, images with positioning
+- React-based component library
+- TypeScript support and declarations
+
+### 🚧 Planned Features
+- **Audio Controller**: music, play_sound, stop_music, stop_sound
+- **Animation System**: animate, move, stop_animation with easing
+- **Timing Controls**: wait, timer, auto_advance page options
+- **Video Agent**: video rendering with controls
+- **Advanced Event Handling**: on_drag, on_drop for all agents
+
 ## Installation
 
+### Web Editor (Recommended)
+Visit the live editor at [fablejs.dev](https://fablejs.dev) - no installation required!
+
+### Parser Only
 ```bash
-npm install
+npm install @fable-js/parser
+```
+
+### Full Framework (Parser + Runtime)
+```bash
+npm install @fable-js/parser @fable-js/runtime react react-dom
+```
+
+### Development (Monorepo)
+```bash
+pnpm install
+pnpm build
+pnpm dev --filter=@fable-js/web  # Start web editor
 ```
 
 ## Usage
+
+### Parser API
 
 ```javascript
 import { parseDSL, validateDSL } from '@fable-js/parser';
@@ -36,11 +73,22 @@ const dsl = `
   fable "My Story" do
     page 1 do
       set score to 0
-      text "Score: {score}" at [100, 100]
-      button "Add Points" at [200, 200] do
+      set lives to 3
+      text "Score: {score} | Lives: {lives}" at [100, 100]
+      button "Play Game" at [200, 200] do
         on_click do
-          set score to score + 10
-          set message to "Great job!" + " Keep going!"
+          set points to random 1..10
+          set score to score + points
+          set level to score / 100 + 1
+          set is_high_score to score > 1000
+          set should_level_up to score % 100 == 0 && lives > 0
+          set message to "Got " + points + " points!"
+        end
+      end
+      button "Reset" at [300, 200] do
+        on_click do
+          set score to 0
+          set lives to 3
         end
       end
     end
@@ -50,18 +98,80 @@ const dsl = `
 // Parse to AST
 const ast = parseDSL(dsl);
 console.log(ast.title);  // "My Story"
-console.log(ast.pages[0].agents[0].content);  // "Hello World"
 
 // Validate without throwing
 const { valid, error } = validateDSL(dsl);
 if (!valid) console.error(error);
 ```
 
+### Web Editor
+
+The easiest way to get started is with our web-based editor:
+
+1. Visit [fablejs.dev](https://fablejs.dev)
+2. Choose from example stories or write your own DSL
+3. See live preview updates as you type
+4. No installation required!
+
+**Features:**
+- Monaco editor with FableJS syntax highlighting
+- Live preview with real-time updates
+- Error highlighting with line/column information
+- Example stories to learn from
+- Autocomplete and code snippets
+
+### Runtime Player
+
+```jsx
+import { FablePlayer } from '@fable-js/runtime';
+import { parseDSL } from '@fable-js/parser';
+
+function MyStoryApp() {
+  const dsl = `
+    fable "Interactive Demo" do
+      page 1 do
+        set count to 0
+        text "Count: {count}" at [100, 100]
+        button "Increment" at [200, 200] do
+          on_click do
+            set count to count + 1
+          end
+        end
+      end
+    end
+  `;
+
+  const ast = parseDSL(dsl);
+
+  return (
+    <div>
+      <h1>My Interactive Story</h1>
+      <FablePlayer ast={ast} />
+    </div>
+  );
+}
+```
+
 ## Testing
 
+### Parser Tests
 ```bash
-npm test           # Run all tests
-npm run test:watch # Watch mode
+cd packages/parser
+pnpm test           # Run parser tests
+pnpm test:watch     # Watch mode
+```
+
+### Runtime Tests
+```bash
+cd packages/runtime
+pnpm test           # Run runtime tests
+pnpm test:watch     # Watch mode
+```
+
+### All Tests (Monorepo)
+```bash
+pnpm test           # Run all tests across workspace
+pnpm test:watch     # Watch mode for all packages
 ```
 
 ## Grammar
@@ -83,24 +193,34 @@ fable "Interactive Story" do
 
     button "Attack" at [200, 200] do
       on_click do
-        set damage to 10 + bonus
+        set damage to 10 + bonus % 5
         set health to health - damage
-        set message to "You took " + damage + " damage!"
-        if health <= 0 do
+        set is_critical to random 1..100 <= 10
+        set final_damage to damage * (is_critical ? 2 : 1)
+        set health to health - final_damage
+        set message to "You took " + final_damage + (is_critical ? " CRITICAL!" : " damage!")
+        if health <= 0 || lives == 0 do
           go_to_page 3
         end
       end
     end
 
-    button "Heal" at [300, 200] do
+    button "Special Attack" at [300, 200] do
       on_click do
-        set heal_amount to health * 0.2
-        set health to health + heal_amount
+        if mana >= 20 && !is_cooldown do
+          set damage to strength * 3
+          set mana to mana - 20
+          set is_cooldown to true
+        end
       end
     end
 
-    if health > 50 do
-      text "You're strong!" at [150, 150]
+    if health > 50 && mana > 0 do
+      text "You're ready for battle!" at [150, 150]
+    end
+
+    if health <= 25 do
+      text "Low health warning!" at [150, 180]
     end
 
     for i in 1..3 do
@@ -140,7 +260,8 @@ end
       ],
       statements: [
         { type: 'set', variable: 'health', value: { type: 'number', value: 100 } },
-        { type: 'set', variable: 'damage', value: { type: 'binary_op', operator: '-', left: { type: 'variable', name: 'health' }, right: { type: 'binary_op', operator: '+', left: { type: 'number', value: 10 }, right: { type: 'variable', name: 'bonus' } } } }
+        { type: 'set', variable: 'is_alive', value: { type: 'binary_op', operator: '&&', left: { type: 'binary_op', operator: '>', left: { type: 'variable', name: 'health' }, right: { type: 'number', value: 0 } }, right: { type: 'unary_op', operator: '!', operand: { type: 'variable', name: 'is_ghost' } } } },
+        { type: 'set', variable: 'level', value: { type: 'binary_op', operator: '+', left: { type: 'binary_op', operator: '/', left: { type: 'variable', name: 'experience' }, right: { type: 'number', value: 100 } }, right: { type: 'number', value: 1 } } }
       ]
     }
   ]
@@ -150,15 +271,83 @@ end
 ## Project Structure
 
 ```
-src/
-├── grammar/
-│   └── fable.ohm       # Ohm grammar definition
-├── semantics/
-│   └── toAST.js        # CST-to-AST transformation
-├── index.js            # Public API (parseDSL, validateDSL)
-└── types.d.ts          # TypeScript definitions
-tests/
-└── parser.test.mjs     # Vitest test suite
+fable-js/
+├── apps/
+│   └── web/                       # Next.js web editor
+│       ├── src/
+│       │   ├── app/               # Next.js 15 app router
+│       │   ├── components/        # React components
+│       │   │   ├── ui/            # Reusable UI components
+│       │   │   └── FableEditor.tsx # Main editor component
+│       │   └── lib/               # Utilities & language support
+│       │       ├── fable-language.ts # Monaco syntax highlighting
+│       │       └── examples.ts    # Sample stories
+│       └── package.json
+├── packages/
+│   ├── parser/                    # @fable-js/parser
+│   │   ├── src/
+│   │   │   ├── index.js           # Public API (parseDSL, validateDSL)
+│   │   │   ├── grammar/
+│   │   │   │   └── fable.ohm      # Ohm grammar definition
+│   │   │   ├── semantics/
+│   │   │   │   └── toAST.js       # CST-to-AST transformation
+│   │   │   └── types.d.ts         # TypeScript definitions
+│   │   ├── tests/
+│   │   │   └── parser.test.mjs    # Parser test suite (44 tests)
+│   │   └── package.json
+│   └── runtime/                   # @fable-js/runtime
+│       ├── src/
+│       │   ├── index.js           # Main exports
+│       │   ├── index.d.ts         # TypeScript declarations
+│       │   ├── engine/
+│       │   │   ├── FableState.ts      # State management
+│       │   │   └── ExpressionEvaluator.ts # Math/logic evaluation
+│       │   └── components/
+│       │       ├── FablePlayer.tsx    # Main player component
+│       │       ├── FableText.tsx      # Text agent
+│       │       ├── FableButton.tsx    # Button agent
+│       │       └── FableImage.tsx     # Image agent
+│       ├── tests/
+│       │   └── runtime.test.js    # Runtime test suite
+│       ├── dist/                 # Built distribution files
+│       └── package.json
+├── turbo.json                     # Turborepo pipeline configuration
+├── pnpm-workspace.yaml            # Workspace configuration
+└── package.json                   # Root workspace config
+```
+fable-js/
+├── apps/                          # Future Next.js demo applications
+├── packages/
+│   ├── parser/                    # @fable-js/parser
+│   │   ├── src/
+│   │   │   ├── index.js           # Public API (parseDSL, validateDSL)
+│   │   │   ├── grammar/
+│   │   │   │   └── fable.ohm      # Ohm grammar definition
+│   │   │   ├── semantics/
+│   │   │   │   └── toAST.js       # CST-to-AST transformation
+│   │   │   └── types.d.ts         # TypeScript definitions
+│   │   ├── tests/
+│   │   │   └── parser.test.mjs    # Parser test suite (44 tests)
+│   │   └── package.json
+│   └── runtime/                   # @fable-js/runtime
+│       ├── src/
+│       │   ├── index.js           # Main exports
+│       │   ├── index.d.ts         # TypeScript declarations
+│       │   ├── engine/
+│       │   │   ├── FableState.js      # State management
+│       │   │   └── ExpressionEvaluator.js # Expression evaluation
+│       │   └── components/
+│       │       ├── FablePlayer.jsx    # Main player component
+│       │       ├── FableText.jsx      # Text agent
+│       │       ├── FableButton.jsx    # Button agent
+│       │       └── FableImage.jsx     # Image agent
+│       ├── tests/
+│       │   └── runtime.test.js    # Runtime test suite
+│       ├── dist/                 # Built distribution files
+│       └── package.json
+├── turbo.json                     # Turborepo pipeline configuration
+├── pnpm-workspace.yaml            # Workspace configuration
+└── package.json                   # Root workspace config
 ```
 
 ## Extending the Grammar
@@ -172,23 +361,75 @@ Use the [Ohm Editor](https://ohmjs.org/editor/) to test grammar changes interact
 
 ## API Reference
 
-### `parseDSL(source: string): Fable`
+### Parser API (`@fable-js/parser`)
+
+#### `parseDSL(source: string): Fable`
 
 Parses DSL source code and returns the AST. Throws an error with line/column info on parse failure.
 
-### `validateDSL(source: string): { valid: boolean, error?: string }`
+#### `validateDSL(source: string): { valid: boolean, error?: string }`
 
 Validates DSL without throwing. Returns validation result with optional error message.
 
-### `getGrammar(): Grammar`
+#### `getGrammar(): Grammar`
 
 Returns the raw Ohm grammar object for advanced use cases (extending, custom semantics).
+
+### Runtime API (`@fable-js/runtime`)
+
+#### `<FablePlayer ast={ast} className? style? />`
+
+Main React component that renders and executes interactive stories.
+
+**Props:**
+- `ast`: Parsed AST from `@fable-js/parser`
+- `className?`: Additional CSS classes
+- `style?`: Inline styles (overrides defaults)
+
+**Features:**
+- State management for variables and page navigation
+- Real-time expression evaluation
+- Event handling for interactive agents
+- Automatic agent rendering with positioning
+
+#### Engine Classes
+
+##### `FableState`
+Manages story state, variables, and page navigation.
+
+##### `ExpressionEvaluator`
+Evaluates arithmetic, comparison, and logical expressions in real-time.
 
 ## References
 
 - Pinto, Hedvan Fernandes. "Authorship of Interactive e-books: conceptual model fables and requirements." [Link](https://tedebc.ufma.br/jspui/handle/tede/2010)
 - Silva, Alfredo Tito. "FableJS: Biblioteca para criacao de historias interativas." [PDF Link](https://rosario.ufma.br/jspui/bitstream/123456789/6908/1/AlfredoTitoSilva.pdf)
 - [Ohm.js Documentation](https://ohmjs.org/docs/)
+
+## Contributing
+
+### Adding New Agent Types
+
+1. Create new component in `packages/runtime/src/components/`
+2. Add case in `FablePlayer.jsx` switch statement
+3. Export from `packages/runtime/src/index.js`
+4. Add TypeScript definitions in `packages/runtime/src/index.d.ts`
+
+### Extending Expression Evaluation
+
+1. Add new expression types in `ExpressionEvaluator.js`
+2. Update parser grammar in `packages/parser/src/grammar/fable.ohm`
+3. Add semantic actions in `packages/parser/src/semantics/toAST.js`
+4. Add tests for new expressions
+
+### Adding New Features
+
+The runtime is designed to be extensible. New features like audio, animation, and timing can be added by:
+
+1. Creating dedicated engine classes (e.g., `AudioController`, `AnimationEngine`)
+2. Integrating them into the `FablePlayer` component
+3. Adding new statement handlers for DSL commands
+4. Updating the parser grammar and semantics as needed
 
 ## License
 

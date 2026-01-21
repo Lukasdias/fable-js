@@ -1,0 +1,33 @@
+{
+  "name": "@fable-js/parser",
+  "version": "1.0.0",
+  "description": "DSL parser for FableJS interactive storytelling",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/types.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "dsl",
+    "parser",
+    "fable",
+    "storytelling",
+    "interactive",
+    "education"
+  ],
+  "author": "Lukasdias",
+  "license": "MIT",
+  "dependencies": {
+    "ohm-js": "^17.3.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.17"
+  }
+}
