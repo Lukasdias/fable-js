@@ -1,0 +1,21 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/web"
+    },
+    {
+      "path": "./packages/parser"
+    },
+    {
+      "path": "./packages/runtime"
+    },
+    {
+      "path": "./packages/editor"
+    }
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true
+  }
+}

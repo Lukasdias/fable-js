@@ -1,16 +1,13 @@
 'use client'
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
-import { FablePlayer } from '@fable-js/runtime'
-import { parseDSL, validateDSL, type Fable } from '@fable-js/parser'
-import { FableMonacoEditor } from '@fable-js/editor'
-import { cn } from '@/lib/utils'
-import { EXAMPLES } from '@/lib/examples'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { AlertCircle, Play, FileText, Eye } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { FableMonacoEditor } from '@fable-js/editor'
+import { parseDSL, type Fable } from '@fable-js/parser'
+import { FablePlayer } from '@fable-js/runtime'
+import { AlertCircle, Eye, FileText, Play } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const DEFAULT_DSL = `fable "My Interactive Story" do
   page 1 do
@@ -137,7 +134,6 @@ export function FableEditor() {
                     scrollBeyondLastLine: false,
                     automaticLayout: true,
                     wordWrap: 'on',
-                    tabSize: 2,
                     insertSpaces: true,
                     wordWrapColumn: 80,
                     rulers: [80],

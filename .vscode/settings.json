@@ -1,0 +1,10 @@
+{
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.includeCompletionsForImportStatements": true,
+  "typescript.preferences.includeCompletionsForImportStatements": true,
+  "typescript.preferences.workspaceSymbols": true,
+  "typescript.workspaceSymbols.scope": "workspace"
+}

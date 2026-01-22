@@ -9,6 +9,12 @@
     "test": "turbo run test",
     "lint": "turbo run lint"
   },
+  "dependencies": {
+    "lucide-react": "^0.439.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.4.0",
+    "class-variance-authority": "^0.7.0"
+  },
   "devDependencies": {
     "turbo": "^2.5.0"
   },

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import * as monaco from 'monaco-editor';
-import { registerFableLanguage } from '../lib/fable-language.js';
 import { validateDSL } from '@fable-js/parser';
+import * as monaco from 'monaco-editor';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { registerFableLanguage } from '../lib/fable-language.js';
 
 export interface FableMonacoEditorProps {
   value: string;
@@ -80,8 +80,6 @@ export const FableMonacoEditor: React.FC<FableMonacoEditorProps> = ({
       scrollBeyondLastLine: false,
       automaticLayout: true,
       wordWrap: 'on',
-      tabSize: 2,
-      insertSpaces: true,
       wordWrapColumn: 80,
       rulers: [80],
       quickSuggestions: {

@@ -2,6 +2,7 @@
   "name": "@fable-js/editor",
   "version": "1.0.0",
   "description": "Monaco-based editor for FableJS DSL with syntax highlighting and themes",
+  "private": true,
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -29,6 +30,12 @@
   ],
   "author": "FableJS Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukasdias/fable-js",
+    "directory": "packages/editor"
+  },
+  "homepage": "https://github.com/lukasdias/fable-js#readme",
   "dependencies": {
     "@fable-js/parser": "workspace:*",
     "monaco-editor": "^0.50.0",
