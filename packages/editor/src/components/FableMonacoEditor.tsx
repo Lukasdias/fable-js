@@ -70,7 +70,6 @@ export const FableMonacoEditor: React.FC<FableMonacoEditorProps> = ({
     (debouncedLint as any).timeoutId = timeoutId;
   }, []);
 
-  // Create editor instance - only when container is ready
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -98,38 +97,29 @@ export const FableMonacoEditor: React.FC<FableMonacoEditorProps> = ({
 
     editorRef.current = monaco.editor.create(containerRef.current, defaultOptions);
 
-    // Set initial value
     if (value) {
       editorRef.current.setValue(value);
     }
 
-    // Set the language on the model
     const model = editorRef.current.getModel();
     if (model) {
       monaco.editor.setModelLanguage(model, 'fable');
     }
 
-    // Set the theme
     monaco.editor.setTheme(theme);
 
-    // Setup change listener with debounced operations
     subscriptionRef.current = editorRef.current.onDidChangeModelContent(() => {
-      // Skip if we're programmatically updating the value
       if (isUpdatingRef.current) return;
 
       const newValue = editorRef.current?.getValue() || '';
-
-      // Always call onChange - parent will handle deduplication if needed
       onChange?.(newValue);
 
-      // Debounced linting
       const model = editorRef.current?.getModel();
       if (model) {
         debouncedLint(newValue, model);
       }
     });
 
-    // Add keyboard shortcuts
     editorRef.current.addCommand(monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF, () => {
       editorRef.current?.getAction('editor.action.formatDocument')?.run();
     });

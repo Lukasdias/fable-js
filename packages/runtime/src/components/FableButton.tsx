@@ -1,22 +1,24 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Rect, Text, Group } from 'react-konva';
 import type { ButtonAgent, InterpolatedString, Agent } from '@fable-js/parser';
-import { useRuntimeStore } from '../store/RuntimeStore.js';
+import { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js';
 
 export interface FableButtonProps {
   agent: ButtonAgent;
+  variables: Map<string, any>;
   onEvent: (event: string, agent: Agent) => void;
 }
 
-/**
- * Button agent component using Konva Rect + Text for canvas rendering
- */
-export function FableButton({ agent, onEvent }: FableButtonProps) {
-  const { evaluator } = useRuntimeStore();
-  const [isHovered, setIsHovered] = React.useState(false);
+export function FableButton({ agent, variables, onEvent }: FableButtonProps) {
+  const [isHovered, setIsHovered] = useState(false);
 
-  // Memoize label evaluation
-  const label = React.useMemo(() => {
+  // Create evaluator with current variables - recreated when variables change
+  const evaluator = useMemo(() => new ExpressionEvaluator({
+    getVariable: (name: string) => variables.get(name) ?? 0,
+    hasVariable: (name: string) => variables.has(name),
+  }), [variables]);
+
+  const label = useMemo(() => {
     if (!evaluator) return 'Button';
 
     if (agent.label && typeof agent.label === 'object' && 'type' in agent.label) {
@@ -32,21 +34,19 @@ export function FableButton({ agent, onEvent }: FableButtonProps) {
   const y = agent.position?.[1] || 0;
   const width = 120;
   const height = 40;
-
-  // Calculate text position to center it in the button
   const textX = x + width / 2;
   const textY = y + height / 2;
 
-  const handleClick = React.useCallback(() => {
+  const handleClick = useCallback(() => {
     onEvent('on_click', agent);
   }, [onEvent, agent]);
 
-  const handleMouseEnter = React.useCallback(() => {
+  const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
     onEvent('on_hover', agent);
   }, [onEvent, agent]);
 
-  const handleMouseLeave = React.useCallback(() => {
+  const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
   }, []);
 

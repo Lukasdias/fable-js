@@ -6,8 +6,9 @@ import { Separator } from '@/components/ui/separator'
 import { FableMonacoEditor } from '@fable-js/editor'
 import { parseDSL, type Fable } from '@fable-js/parser'
 import { FablePlayer } from '@fable-js/runtime'
-import { AlertCircle, Eye, FileText, Play } from 'lucide-react'
+import { AlertCircle, Eye, FileText, Play, Save } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import * as monaco from 'monaco-editor'
 
 const DEFAULT_DSL = `fable "My Interactive Story" do
   page 1 do
@@ -34,11 +35,12 @@ end`
 
 export function FableEditor() {
   const [dsl, setDsl] = useState(DEFAULT_DSL)
+  const [draft, setDraft] = useState(DEFAULT_DSL)
   const [ast, setAst] = useState<Fable | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
-  // Parse DSL when it changes - use useEffect instead of useMemo with side effects
   useEffect(() => {
     if (!dsl.trim()) {
       setAst(null)
@@ -48,24 +50,38 @@ export function FableEditor() {
 
     try {
       const parsedAst = parseDSL(dsl)
+      console.log('📝 FableEditor Debug - Parsed AST:', {
+        ast: parsedAst,
+        pages: parsedAst.pages,
+        pageIds: parsedAst.pages.map(p => ({ id: p.id, type: typeof p.id })),
+        dsl: dsl.slice(0, 100) + '...'
+      });
       setAst(parsedAst)
       setError(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Parse error'
+      console.error('❌ FableEditor Parse Error:', errorMessage);
       setAst(null)
       setError(errorMessage)
     }
   }, [dsl])
 
-  // Stable callback to prevent re-renders
-  const handleEditorChange = useCallback((value: string | undefined) => {
-    setDsl(value || '')
-  }, []) // Empty dependency array ensures stability
+  useEffect(() => {
+    setHasUnsavedChanges(draft !== dsl)
+  }, [draft, dsl])
 
-  // Stable callback for editor mount
-  const handleEditorDidMount = useCallback((editor: any) => {
-    // Keyboard shortcuts are now handled by FableMonacoEditor component
+  const handleEditorChange = useCallback((value: string | undefined) => {
+    setDraft(value || '')
   }, [])
+
+  const handleSave = useCallback(() => {
+    setDsl(draft)
+    setHasUnsavedChanges(false)
+  }, [draft])
+
+  const handleEditorDidMount = useCallback((editor: any) => {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, handleSave)
+  }, [handleSave])
 
   const handlePlay = useCallback(() => {
     if (ast) {
@@ -84,6 +100,9 @@ export function FableEditor() {
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
           <h1 className="font-semibold">FableJS Editor</h1>
+          {hasUnsavedChanges && (
+            <span className="text-sm text-orange-600 font-medium">• Draft</span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {error && (
@@ -94,8 +113,14 @@ export function FableEditor() {
               </AlertDescription>
             </Alert>
           )}
+          {hasUnsavedChanges && (
+            <Button onClick={handleSave} size="sm" variant="outline">
+              <Save className="h-4 w-4 mr-2" />
+              Save (Ctrl+S)
+            </Button>
+          )}
           {!isPlaying ? (
-            <Button onClick={handlePlay} disabled={!ast} size="sm">
+            <Button onClick={handlePlay} disabled={!ast || hasUnsavedChanges} size="sm">
               <Play className="h-4 w-4 mr-2" />
               Preview
             </Button>
@@ -117,13 +142,13 @@ export function FableEditor() {
               <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
                 <h2 className="text-sm font-medium">DSL Editor</h2>
                 <div className="text-xs text-muted-foreground">
-                  {dsl.split('\n').length} lines • Shift+Alt+F to format
+                  {draft.split('\n').length} lines • Shift+Alt+F to format
                 </div>
               </div>
               <div className="flex-1 min-h-0">
                 <FableMonacoEditor
-                  key="fable-editor" // Stable key to prevent recreation
-                  value={dsl}
+                  key="fable-editor"
+                  value={draft}
                   onChange={handleEditorChange}
                   onMount={handleEditorDidMount}
                   theme="fable-dark"
@@ -134,6 +159,7 @@ export function FableEditor() {
                     scrollBeyondLastLine: false,
                     automaticLayout: true,
                     wordWrap: 'on',
+                    tabSize: 2,
                     insertSpaces: true,
                     wordWrapColumn: 80,
                     rulers: [80],

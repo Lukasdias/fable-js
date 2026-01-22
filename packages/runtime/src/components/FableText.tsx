@@ -1,20 +1,22 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text } from 'react-konva';
 import type { TextAgent, InterpolatedString } from '@fable-js/parser';
-import { useRuntimeStore } from '../store/RuntimeStore.js';
+import { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js';
 
 export interface FableTextProps {
   agent: TextAgent;
+  variables: Map<string, any>;
 }
 
-/**
- * Text agent component using Konva Text for canvas rendering
- */
-export function FableText({ agent }: FableTextProps) {
-  const { evaluator } = useRuntimeStore();
 
-  // Memoize content evaluation to prevent unnecessary re-computation
-  const content = React.useMemo(() => {
+export function FableText({ agent, variables }: FableTextProps) {
+  // Create evaluator with current variables - recreated when variables change
+  const evaluator = useMemo(() => new ExpressionEvaluator({
+    getVariable: (name: string) => variables.get(name) ?? 0,
+    hasVariable: (name: string) => variables.has(name),
+  }), [variables]);
+
+  const content = useMemo(() => {
     if (!evaluator) return '';
 
     if (agent.content && typeof agent.content === 'object' && 'type' in agent.content) {
