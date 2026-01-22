@@ -2,12 +2,11 @@
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { FableMonacoEditor } from '@fable-js/editor'
 import { parseDSL, type Fable } from '@fable-js/parser'
 import { FablePlayer } from '@fable-js/runtime'
-import { AlertCircle, Eye, FileText, Play, Save } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AlertCircle, Code, Maximize2, Minimize2, Play, RotateCcw, Save } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
 
 const DEFAULT_DSL = `fable "My Interactive Story" do
@@ -23,7 +22,6 @@ const DEFAULT_DSL = `fable "My Interactive Story" do
       on_click do
         set score to score + 10
         set health to health - 5
-        // Using logical operators
         set alive to health > 0 and not (score < 0)
       end
     end
@@ -51,7 +49,6 @@ const DEFAULT_DSL = `fable "My Interactive Story" do
     button "Roll Dice" at [50, 150] do
       on_click do
         set roll to random 1..6
-        // Check if critical hit or miss
         set critical to roll == 6 or roll == 1
       end
     end
@@ -69,8 +66,41 @@ export function FableEditor() {
   const [draft, setDraft] = useState(DEFAULT_DSL)
   const [ast, setAst] = useState<Fable | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [playerKey, setPlayerKey] = useState(0)
+  const previewContainerRef = useRef<HTMLDivElement>(null)
+  const [previewSize, setPreviewSize] = useState({ width: 800, height: 450 })
+
+  // Calculate preview size based on container
+  useEffect(() => {
+    const updateSize = () => {
+      if (previewContainerRef.current) {
+        const container = previewContainerRef.current
+        const containerWidth = container.clientWidth - 48 // padding
+        const containerHeight = container.clientHeight - 48
+        
+        // Maintain 16:9 aspect ratio
+        const aspectRatio = 16 / 9
+        let width = containerWidth
+        let height = width / aspectRatio
+        
+        if (height > containerHeight) {
+          height = containerHeight
+          width = height * aspectRatio
+        }
+        
+        setPreviewSize({ 
+          width: Math.floor(Math.max(640, width)), 
+          height: Math.floor(Math.max(360, height)) 
+        })
+      }
+    }
+
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
+  }, [isFullscreen])
 
   useEffect(() => {
     if (!dsl.trim()) {
@@ -81,17 +111,10 @@ export function FableEditor() {
 
     try {
       const parsedAst = parseDSL(dsl)
-      console.log('📝 FableEditor Debug - Parsed AST:', {
-        ast: parsedAst,
-        pages: parsedAst.pages,
-        pageIds: parsedAst.pages.map(p => ({ id: p.id, type: typeof p.id })),
-        dsl: dsl.slice(0, 100) + '...'
-      });
       setAst(parsedAst)
       setError(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Parse error'
-      console.error('❌ FableEditor Parse Error:', errorMessage);
       setAst(null)
       setError(errorMessage)
     }
@@ -114,159 +137,218 @@ export function FableEditor() {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, handleSave)
   }, [handleSave])
 
-  const handlePlay = useCallback(() => {
-    if (ast) {
-      setIsPlaying(true)
-    }
-  }, [ast])
-
-  const handleStop = useCallback(() => {
-    setIsPlaying(false)
+  const handleRestart = useCallback(() => {
+    setPlayerKey(prev => prev + 1)
   }, [])
 
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev)
+  }, [])
+
+  // Monaco editor options
+  const editorOptions = useMemo(() => ({
+    minimap: { enabled: false },
+    fontSize: 13,
+    lineNumbers: 'on' as const,
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    wordWrap: 'on' as const,
+    tabSize: 2,
+    insertSpaces: true,
+    folding: true,
+    lineDecorationsWidth: 8,
+    lineNumbersMinChars: 3,
+    renderLineHighlight: 'line' as const,
+    quickSuggestions: {
+      other: true,
+      comments: false,
+      strings: true,
+    },
+    suggestOnTriggerCharacters: true,
+    acceptSuggestionOnEnter: 'on' as const,
+    tabCompletion: 'on' as const,
+  }), [])
+
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-card px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          <h1 className="font-semibold">FableJS Editor</h1>
+    <div className="h-screen flex flex-col bg-zinc-950">
+      {/* Top Toolbar */}
+      <div className="h-12 border-b border-zinc-800 bg-zinc-900 px-4 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+              <Play className="h-4 w-4 text-white fill-white" />
+            </div>
+            <span className="font-semibold text-white">FableJS</span>
+          </div>
+          {ast && (
+            <span className="text-xs text-zinc-500 border-l border-zinc-700 pl-3">
+              {ast.title}
+            </span>
+          )}
           {hasUnsavedChanges && (
-            <span className="text-sm text-orange-600 font-medium">• Draft</span>
+            <span className="text-xs text-amber-500 font-medium">Unsaved</span>
           )}
         </div>
+        
         <div className="flex items-center gap-2">
           {error && (
-            <Alert className="w-auto py-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                Parse error
-              </AlertDescription>
-            </Alert>
+            <div className="flex items-center gap-1.5 text-red-400 text-xs bg-red-500/10 px-2 py-1 rounded">
+              <AlertCircle className="h-3.5 w-3.5" />
+              <span>Syntax Error</span>
+            </div>
           )}
-          {hasUnsavedChanges && (
-            <Button onClick={handleSave} size="sm" variant="outline">
-              <Save className="h-4 w-4 mr-2" />
-              Save (Ctrl+S)
-            </Button>
-          )}
-          {!isPlaying ? (
-            <Button onClick={handlePlay} disabled={!ast || hasUnsavedChanges} size="sm">
-              <Play className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-          ) : (
-            <Button onClick={handleStop} variant="outline" size="sm">
-              <Eye className="h-4 w-4 mr-2" />
-              Stop Preview
-            </Button>
-          )}
+          
+          <Button 
+            onClick={handleSave} 
+            size="sm" 
+            variant="ghost"
+            disabled={!hasUnsavedChanges}
+            className="text-zinc-400 hover:text-white h-8"
+          >
+            <Save className="h-4 w-4 mr-1.5" />
+            Save
+          </Button>
+          
+          <div className="w-px h-5 bg-zinc-700" />
+          
+          <Button 
+            onClick={handleRestart} 
+            size="sm" 
+            variant="ghost"
+            disabled={!ast}
+            className="text-zinc-400 hover:text-white h-8"
+          >
+            <RotateCcw className="h-4 w-4 mr-1.5" />
+            Restart
+          </Button>
+          
+          <Button 
+            onClick={toggleFullscreen} 
+            size="sm" 
+            variant="ghost"
+            className="text-zinc-400 hover:text-white h-8"
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-4 w-4 mr-1.5" />
+            ) : (
+              <Maximize2 className="h-4 w-4 mr-1.5" />
+            )}
+            {isFullscreen ? 'Exit' : 'Fullscreen'}
+          </Button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row">
-        {!isPlaying ? (
-          <>
-            {/* Editor Pane - Takes 60% on large screens */}
-            <div className="flex-1 lg:flex-[3] flex flex-col min-h-0">
-              <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
-                <h2 className="text-sm font-medium">DSL Editor</h2>
-                <div className="text-xs text-muted-foreground">
-                  {draft.split('\n').length} lines • Shift+Alt+F to format
-                </div>
+      {/* Main Content - 40/60 Split */}
+      <div className="flex-1 flex min-h-0">
+        {/* Left Panel - Code Editor (40%) */}
+        {!isFullscreen && (
+          <div className="w-[40%] flex flex-col border-r border-zinc-800 bg-zinc-900">
+            {/* Editor Header */}
+            <div className="h-10 border-b border-zinc-800 px-3 flex items-center justify-between shrink-0 bg-zinc-900/50">
+              <div className="flex items-center gap-2 text-zinc-400">
+                <Code className="h-4 w-4" />
+                <span className="text-xs font-medium">Script Editor</span>
               </div>
-              <div className="flex-1 min-h-0">
-                <FableMonacoEditor
-                  key="fable-editor"
-                  value={draft}
-                  onChange={handleEditorChange}
-                  onMount={handleEditorDidMount}
-                  theme="fable-dark"
-                  options={useMemo(() => ({
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    lineNumbers: 'on',
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    wordWrap: 'on',
-                    tabSize: 2,
-                    insertSpaces: true,
-                    wordWrapColumn: 80,
-                    rulers: [80],
-                    quickSuggestions: {
-                      other: true,
-                      comments: false,
-                      strings: true,
-                    },
-                    suggestOnTriggerCharacters: true,
-                    acceptSuggestionOnEnter: 'on',
-                    tabCompletion: 'on',
-                    formatOnType: true,
-                    formatOnPaste: true,
-                  }), [])}
-                />
+              <div className="text-xs text-zinc-600">
+                {draft.split('\n').length} lines
               </div>
+            </div>
+            
+            {/* Monaco Editor */}
+            <div className="flex-1 min-h-0">
+              <FableMonacoEditor
+                key="fable-editor"
+                value={draft}
+                onChange={handleEditorChange}
+                onMount={handleEditorDidMount}
+                theme="fable-dark"
+                options={editorOptions}
+              />
             </div>
 
-            <Separator orientation="vertical" className="hidden lg:block" />
-
-            {/* Preview Pane - Takes 40% on large screens, full width on mobile */}
-            <div className="lg:flex-[2] flex flex-col min-h-0 border-t lg:border-t-0 lg:border-l">
-              <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
-                <h2 className="text-sm font-medium">Live Preview</h2>
-                <div className="flex items-center gap-2">
-                  <div className="text-xs text-muted-foreground">
-                    {ast ? `${ast.pages.length} page${ast.pages.length !== 1 ? 's' : ''}` : 'No story'}
-                  </div>
+            {/* Error Panel */}
+            {error && (
+              <div className="border-t border-zinc-800 bg-red-950/30 p-3 max-h-32 overflow-auto">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                  <pre className="text-xs text-red-300 font-mono whitespace-pre-wrap break-all">
+                    {error}
+                  </pre>
                 </div>
               </div>
-              <div className="flex-1 min-h-0 p-4 bg-muted/10 flex items-center justify-center">
-                {ast ? (
-                  <div className="w-full max-w-lg aspect-video border rounded-lg overflow-hidden bg-white shadow-lg">
-                    <FablePlayer ast={ast} width={640} height={360} />
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    {error ? (
-                      <>
-                        <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
-                        <p className="text-sm text-muted-foreground mb-2">Parse error in DSL</p>
-                        <p className="text-xs text-destructive font-mono max-w-md">{error.split('\n')[0]}</p>
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">Enter valid DSL to see preview</p>
-                        <p className="text-xs text-muted-foreground mt-2">The preview will update automatically</p>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : (
-          // Fullscreen Preview Mode
-          <div className="flex-1 flex items-center justify-center bg-muted/20 p-8">
-            <div className="w-full max-w-6xl aspect-video border rounded-lg overflow-hidden bg-white shadow-2xl">
-              {ast && <FablePlayer ast={ast} width={1280} height={720} />}
-            </div>
+            )}
           </div>
         )}
-      </div>
 
-      {/* Error Panel */}
-      {error && (
-        <div className="border-t bg-destructive/5 px-4 py-2">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="font-mono text-sm">
-              {error}
-            </AlertDescription>
-          </Alert>
+        {/* Right Panel - Preview Canvas (60% or 100% in fullscreen) */}
+        <div 
+          ref={previewContainerRef}
+          className={`${isFullscreen ? 'w-full' : 'w-[60%]'} flex flex-col bg-zinc-950`}
+        >
+          {/* Preview Header */}
+          <div className="h-10 border-b border-zinc-800 px-4 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium text-zinc-400">Preview</span>
+              {ast && (
+                <span className="text-xs text-zinc-600">
+                  Page {ast.pages.length > 0 ? '1' : '0'} of {ast.pages.length}
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-zinc-600">
+              {previewSize.width} x {previewSize.height}
+            </div>
+          </div>
+
+          {/* Canvas Container - Centered with padding */}
+          <div className="flex-1 flex items-center justify-center p-6 bg-zinc-950 min-h-0">
+            {ast ? (
+              <div 
+                className="relative rounded-lg overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10"
+                style={{ 
+                  width: previewSize.width, 
+                  height: previewSize.height,
+                }}
+              >
+                {/* Checkerboard pattern for transparency (like design tools) */}
+                <div 
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `
+                      linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
+                      linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
+                      linear-gradient(-45deg, transparent 75%, #1a1a1a 75%)
+                    `,
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                    backgroundColor: '#0f0f0f',
+                  }}
+                />
+                {/* Fable Player */}
+                <div className="relative z-10">
+                  <FablePlayer 
+                    key={`preview-${playerKey}`}
+                    ast={ast} 
+                    width={previewSize.width} 
+                    height={previewSize.height}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="w-24 h-24 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
+                  <Play className="h-10 w-10 text-zinc-700" />
+                </div>
+                <p className="text-zinc-500 text-sm mb-1">No preview available</p>
+                <p className="text-zinc-600 text-xs">
+                  {error ? 'Fix syntax errors to see preview' : 'Write valid FableDSL code to preview'}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

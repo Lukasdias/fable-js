@@ -59,6 +59,12 @@ export interface Event {
 
 // =========== Statements ===========
 
+export interface InitStatement {
+  type: 'init';
+  variable: string;
+  value: Expression;
+}
+
 export interface SetStatement {
   type: 'set';
   variable: string;
@@ -77,7 +83,7 @@ export interface SubtractStatement {
   variable: string;
 }
 
-export type Statement = SetStatement | AddStatement | SubtractStatement | MusicStatement | WaitBlock | TimerBlock;
+export type Statement = InitStatement | SetStatement | AddStatement | SubtractStatement | MusicStatement | WaitBlock | TimerBlock;
 
 // =========== Expressions ===========
 
@@ -154,6 +160,7 @@ export interface ImageAgent extends BaseAgent {
   type: 'image';
   src: string;
   animate?: AnimateOption;
+  events?: Event[];
 }
 
 export interface VideoAgent extends BaseAgent {

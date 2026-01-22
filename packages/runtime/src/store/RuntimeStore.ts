@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import type { Fable, Statement } from '@fable-js/parser';
 import { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js';
+import { AnimationEngine } from '../engine/AnimationEngine.js';
+import Konva from 'konva';
 
 export interface RuntimeState {
   // Story data
@@ -15,6 +17,9 @@ export interface RuntimeState {
 
   // Evaluator instance
   evaluator: ExpressionEvaluator | null;
+  
+  // Animation engine instance
+  animationEngine: AnimationEngine | null;
 
   // Actions
   setAst: (ast: Fable, preserveState?: boolean) => void;
@@ -25,6 +30,9 @@ export interface RuntimeState {
   hasVariable: (name: string) => boolean;
   executeStatements: (statements: Statement[]) => void;
   reset: () => void;
+  
+  // Animation engine management
+  setAnimationEngine: (engine: AnimationEngine | null) => void;
 
   // Computed
   getCurrentPage: () => Fable['pages'][0] | undefined;
@@ -90,6 +98,7 @@ export const useRuntimeStore = create<RuntimeState>()(
   variables: new Map(),
   dslVariables: new Set(),
   evaluator: null,
+  animationEngine: null,
 
   setAst: (ast: Fable, preserveState = true) => {
     console.log('🏪 RuntimeStore Debug - setAst called:', {
@@ -100,22 +109,28 @@ export const useRuntimeStore = create<RuntimeState>()(
       firstPageId: ast.pages.length > 0 ? ast.pages[0].id : 'no pages'
     });
 
-    // Collect all DSL-defined variables
+    // Collect all DSL-defined variables (from both init and set statements)
     const dslVariables = new Set<string>();
-    ast.pages.forEach(page => {
-      page.statements?.forEach((stmt: any) => {
-        if (stmt.type === 'set') {
+    
+    // Helper to collect variables from statements
+    const collectVariables = (stmts: any[]) => {
+      stmts?.forEach((stmt: any) => {
+        if (stmt.type === 'init' || stmt.type === 'set') {
           dslVariables.add(stmt.variable);
         }
       });
+    };
+    
+    // Collect from fable-level statements
+    collectVariables(ast.statements || []);
+    
+    // Collect from page-level statements and agent events
+    ast.pages.forEach(page => {
+      collectVariables(page.statements || []);
       page.agents?.forEach((agent: any) => {
         if (agent.events) {
           agent.events.forEach((event: any) => {
-            event.statements?.forEach((stmt: any) => {
-              if (stmt.type === 'set') {
-                dslVariables.add(stmt.variable);
-              }
-            });
+            collectVariables(event.statements || []);
           });
         }
       });
@@ -134,23 +149,34 @@ export const useRuntimeStore = create<RuntimeState>()(
       });
     }
 
-    // Create evaluator for executing initial page statements
+    // Create evaluator for executing initial statements
     const evaluator = new ExpressionEvaluator({
       getVariable: (name: string) => newVariables.get(name) ?? 0,
       hasVariable: (name: string) => newVariables.has(name),
     });
 
-    // Execute initial page statements (e.g., set score to 0)
+    // Helper to execute init/set statements
+    const executeInitStatements = (stmts: any[]) => {
+      stmts?.forEach((stmt: any) => {
+        if (stmt.type === 'init' || stmt.type === 'set') {
+          const value = evaluator.evaluate(stmt.value);
+          newVariables.set(stmt.variable, value);
+          console.log(`  📝 ${stmt.type === 'init' ? 'Init' : 'Set'} ${stmt.variable} = ${value}`);
+        }
+      });
+    };
+
+    // Execute fable-level init statements first
+    if (ast.statements) {
+      console.log('📜 setAst: Executing fable-level statements:', ast.statements);
+      executeInitStatements(ast.statements);
+    }
+
+    // Execute initial page statements (e.g., init roll to random 1..6)
     const firstPage = ast.pages[0];
     if (firstPage?.statements) {
       console.log('📜 setAst: Executing initial page statements:', firstPage.statements);
-      firstPage.statements.forEach((stmt: any) => {
-        if (stmt.type === 'set') {
-          const value = evaluator.evaluate(stmt.value);
-          newVariables.set(stmt.variable, value);
-          console.log(`  📝 Set ${stmt.variable} = ${value}`);
-        }
-      });
+      executeInitStatements(firstPage.statements);
     }
 
     set({
@@ -204,19 +230,59 @@ export const useRuntimeStore = create<RuntimeState>()(
   executeStatements: (statements: Statement[]) => {
     if (!statements || statements.length === 0) return;
 
-    const { evaluator } = get();
+    const { evaluator, animationEngine } = get();
     if (!evaluator) return;
 
     // Execute statements in a batch
     statements.forEach((stmt: any) => {
       switch (stmt.type) {
+        case 'init':
+          // Init is like set but semantically for first-time initialization
+          // In runtime, we treat it the same as set
+          const initValue = evaluator.evaluate(stmt.value);
+          get().setVariable(stmt.variable, initValue);
+          console.log(`📝 Init ${stmt.variable} = ${initValue}`);
+          break;
+
         case 'set':
-          const value = evaluator.evaluate(stmt.value);
-          get().setVariable(stmt.variable, value);
+          const setValue = evaluator.evaluate(stmt.value);
+          get().setVariable(stmt.variable, setValue);
+          break;
+
+        case 'add':
+          const addAmount = evaluator.evaluate(stmt.amount);
+          const currentAdd = get().getVariable(stmt.variable) ?? 0;
+          get().setVariable(stmt.variable, currentAdd + addAmount);
+          break;
+
+        case 'subtract':
+          const subAmount = evaluator.evaluate(stmt.amount);
+          const currentSub = get().getVariable(stmt.variable) ?? 0;
+          get().setVariable(stmt.variable, currentSub - subAmount);
           break;
 
         case 'go_to_page':
-          get().goToPage(stmt.pageId);
+          get().goToPage(stmt.pageId ?? stmt.target);
+          break;
+
+        case 'move':
+          // Move action with tweening
+          if (animationEngine) {
+            animationEngine.moveAgent(stmt.agentId, {
+              x: stmt.to[0],
+              y: stmt.to[1],
+              duration: stmt.duration,
+              easing: stmt.easing,
+            });
+          } else {
+            console.warn('AnimationEngine not available for move action');
+          }
+          break;
+
+        case 'stop_animation':
+          if (animationEngine) {
+            animationEngine.stopAnimation(stmt.agentId);
+          }
           break;
 
         default:
@@ -226,6 +292,12 @@ export const useRuntimeStore = create<RuntimeState>()(
   },
 
   reset: () => {
+    // Stop all animations on reset
+    const { animationEngine } = get();
+    if (animationEngine) {
+      animationEngine.stopAll();
+    }
+    
     set((state) => ({
       currentPage: 1,
       pageHistory: [],
@@ -233,6 +305,10 @@ export const useRuntimeStore = create<RuntimeState>()(
       dslVariables: new Set(),
       // Keep AST and evaluator intact for reset functionality
     }));
+  },
+
+  setAnimationEngine: (engine: AnimationEngine | null) => {
+    set({ animationEngine: engine });
   },
 
   // Computed properties
@@ -261,6 +337,11 @@ export const useRuntimeStore = create<RuntimeState>()(
 
 // Reset state utility (from Zustand docs: how-to-reset-state)
 export const resetRuntimeStore = () => {
+  const state = useRuntimeStore.getState();
+  if (state.animationEngine) {
+    state.animationEngine.stopAll();
+  }
+  
   useRuntimeStore.setState({
     ast: null,
     currentPage: 1,
@@ -268,5 +349,6 @@ export const resetRuntimeStore = () => {
     variables: new Map(),
     dslVariables: new Set(),
     evaluator: null,
+    animationEngine: null,
   });
 };

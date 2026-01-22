@@ -1,6 +1,15 @@
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
+import { copyFileSync } from 'fs';
+
+// Plugin to copy types.d.ts to dist
+const copyTypes = () => ({
+  name: 'copy-types',
+  writeBundle() {
+    copyFileSync('src/types.d.ts', 'dist/types.d.ts');
+  }
+});
 
 export default {
   input: 'src/index.js',
@@ -26,6 +35,7 @@ export default {
       tsconfig: './tsconfig.json',
       declaration: true,
       declarationDir: './dist'
-    })
+    }),
+    copyTypes()
   ]
 };

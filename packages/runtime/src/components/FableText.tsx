@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { Text } from 'react-konva';
+import Konva from 'konva';
 import type { TextAgent, InterpolatedString } from '@fable-js/parser';
 import { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js';
+import { useFableContext } from '../context/FableContext.js';
 
 export interface FableTextProps {
   agent: TextAgent;
@@ -10,6 +12,21 @@ export interface FableTextProps {
 
 
 export function FableText({ agent, variables }: FableTextProps) {
+  const textRef = useRef<Konva.Text>(null);
+  const { registerAgent } = useFableContext();
+
+  // Register this agent's ref for tweening/animations
+  useEffect(() => {
+    if (agent.id !== undefined) {
+      registerAgent(agent.id, textRef.current);
+    }
+    return () => {
+      if (agent.id !== undefined) {
+        registerAgent(agent.id, null);
+      }
+    };
+  }, [agent.id, registerAgent]);
+
   // Create evaluator with current variables - recreated when variables change
   const evaluator = useMemo(() => new ExpressionEvaluator({
     getVariable: (name: string) => variables.get(name) ?? 0,
@@ -30,6 +47,7 @@ export function FableText({ agent, variables }: FableTextProps) {
 
   return (
     <Text
+      ref={textRef}
       x={agent.position?.[0] || 0}
       y={agent.position?.[1] || 0}
       text={content}
