@@ -77,6 +77,14 @@ export function createSemantics(grammar) {
     },
 
     // Statements
+    InitStatement(_init, variable, _to, expression) {
+      return {
+        type: 'init',
+        variable: variable.sourceString,
+        value: expression.toAST()
+      };
+    },
+
     SetStatement(_set, variable, _to, expression) {
       return {
         type: 'set',

@@ -415,10 +415,10 @@ describe('FableJS DSL Parser', () => {
   });
 
   describe('Variables & State', () => {
-    it('should parse set statement with number', () => {
+    it('should parse init statement for variable initialization', () => {
       const dsl = `
         fable "Test" do
-          set score to 0
+          init score to 0
           page 1 do
             text "Start" at [100, 100]
           end
@@ -429,16 +429,42 @@ describe('FableJS DSL Parser', () => {
 
       expect(ast.statements).toHaveLength(1);
       expect(ast.statements[0]).toEqual({
-        type: 'set',
+        type: 'init',
         variable: 'score',
         value: { type: 'number', value: 0 }
       });
     });
 
-    it('should parse set statement with string', () => {
+    it('should parse set statement for reassignment', () => {
       const dsl = `
         fable "Test" do
-          set name to "Hero"
+          init score to 0
+          set score to 10
+          page 1 do
+            text "Start" at [100, 100]
+          end
+        end
+      `;
+
+      const ast = parseDSL(dsl);
+
+      expect(ast.statements).toHaveLength(2);
+      expect(ast.statements[0]).toEqual({
+        type: 'init',
+        variable: 'score',
+        value: { type: 'number', value: 0 }
+      });
+      expect(ast.statements[1]).toEqual({
+        type: 'set',
+        variable: 'score',
+        value: { type: 'number', value: 10 }
+      });
+    });
+
+    it('should parse init statement with string', () => {
+      const dsl = `
+        fable "Test" do
+          init name to "Hero"
           page 1 do
             text "Hello" at [100, 100]
           end
@@ -448,16 +474,16 @@ describe('FableJS DSL Parser', () => {
       const ast = parseDSL(dsl);
 
       expect(ast.statements[0]).toEqual({
-        type: 'set',
+        type: 'init',
         variable: 'name',
         value: { type: 'string', value: 'Hero' }
       });
     });
 
-    it('should parse set statement with boolean', () => {
+    it('should parse init statement with boolean', () => {
       const dsl = `
         fable "Test" do
-          set active to true
+          init active to true
           page 1 do
             text "Test" at [100, 100]
           end
@@ -467,7 +493,7 @@ describe('FableJS DSL Parser', () => {
       const ast = parseDSL(dsl);
 
       expect(ast.statements[0]).toEqual({
-        type: 'set',
+        type: 'init',
         variable: 'active',
         value: { type: 'boolean', value: true }
       });
@@ -476,7 +502,7 @@ describe('FableJS DSL Parser', () => {
     it('should parse add and subtract statements', () => {
       const dsl = `
         fable "Test" do
-          set score to 10
+          init score to 10
           add 5 to score
           subtract 2 from score
           page 1 do
@@ -504,7 +530,7 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set result to random 1..10
+            init result to random 1..10
           end
         end
       `;
@@ -512,7 +538,7 @@ describe('FableJS DSL Parser', () => {
       const ast = parseDSL(dsl);
       const statement = ast.pages[0].statements[0];
 
-      expect(statement.type).toBe('set');
+      expect(statement.type).toBe('init');
       expect(statement.variable).toBe('result');
       expect(statement.value).toEqual({
         type: 'random',
@@ -523,7 +549,7 @@ describe('FableJS DSL Parser', () => {
     it('should parse pick_one expressions', () => {
       const dsl = `
         fable "Test" do
-          set color to pick_one ["red", "blue", "green"]
+          init color to pick_one ["red", "blue", "green"]
           page 1 do
             text "Start" at [100, 100]
           end
@@ -533,7 +559,7 @@ describe('FableJS DSL Parser', () => {
       const ast = parseDSL(dsl);
 
       expect(ast.statements[0]).toEqual({
-        type: 'set',
+        type: 'init',
         variable: 'color',
         value: {
           type: 'pick_one',
@@ -546,7 +572,7 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set result to 5 + 3 * 2
+            init result to 5 + 3 * 2
           end
         end
       `;
@@ -554,7 +580,7 @@ describe('FableJS DSL Parser', () => {
       const ast = parseDSL(dsl);
       const statement = ast.pages[0].statements[0];
 
-      expect(statement.type).toBe('set');
+      expect(statement.type).toBe('init');
       expect(statement.variable).toBe('result');
       expect(statement.value).toEqual({
         type: 'binary_op',
@@ -573,7 +599,7 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set greeting to "Hello" + " World"
+            init greeting to "Hello" + " World"
           end
         end
       `;
@@ -581,7 +607,7 @@ describe('FableJS DSL Parser', () => {
       const ast = parseDSL(dsl);
       const statement = ast.pages[0].statements[0];
 
-      expect(statement.type).toBe('set');
+      expect(statement.type).toBe('init');
       expect(statement.variable).toBe('greeting');
       expect(statement.value).toEqual({
         type: 'binary_op',
@@ -595,9 +621,9 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set is_high_score to score > 100
-            set is_equal to count == 5
-            set is_different to name != "Player"
+            init is_high_score to score > 100
+            init is_equal to count == 5
+            init is_different to name != "Player"
           end
         end
       `;
@@ -631,9 +657,9 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set can_attack to health > 0 and mana >= 10
-            set should_flee to health < 20 or enemy_count > 5
-            set is_dead to not is_alive
+            init can_attack to health > 0 and mana >= 10
+            init should_flee to health < 20 or enemy_count > 5
+            init is_dead to not is_alive
           end
         end
       `;
@@ -686,7 +712,7 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set remainder to score % 10
+            init remainder to score % 10
           end
         end
       `;
@@ -694,7 +720,7 @@ describe('FableJS DSL Parser', () => {
       const ast = parseDSL(dsl);
       const statement = ast.pages[0].statements[0];
 
-      expect(statement.type).toBe('set');
+      expect(statement.type).toBe('init');
       expect(statement.variable).toBe('remainder');
       expect(statement.value).toEqual({
         type: 'binary_op',
@@ -708,7 +734,7 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set result to 2 + 3 * 4 == 14 and true
+            init result to 2 + 3 * 4 == 14 and true
           end
         end
       `;
@@ -744,7 +770,7 @@ describe('FableJS DSL Parser', () => {
     it('should parse interpolated strings in text agents', () => {
       const dsl = `
         fable "Test" do
-          set name to "Alice"
+          init name to "Alice"
           page 1 do
             text "Hello, {name}!" at [100, 100]
           end
@@ -767,8 +793,8 @@ describe('FableJS DSL Parser', () => {
     it('should parse multiple variables in interpolated string', () => {
       const dsl = `
         fable "Test" do
-          set score to 42
-          set name to "Bob"
+          init score to 42
+          init name to "Bob"
           page 1 do
             text "{name} scored {score} points!" at [100, 100]
           end
@@ -1019,8 +1045,8 @@ describe('FableJS DSL Parser', () => {
     it('should parse a complex interactive story', () => {
       const dsl = `
         fable "Space Adventure" do
-          set score to 0
-          set player_name to "Astronaut"
+          init score to 0
+          init player_name to "Astronaut"
           music "space_theme.mp3" loop true
 
           page 1 auto_advance 3s do
@@ -1038,7 +1064,7 @@ describe('FableJS DSL Parser', () => {
           end
 
           page 2 do
-            set enemy_damage to random 5..15
+            init enemy_damage to random 5..15
 
             text "Score: {score}" at [10, 10]
             text "Enemy attacks for {enemy_damage} damage!" at [100, 100]
@@ -1068,7 +1094,7 @@ describe('FableJS DSL Parser', () => {
       expect(ast.type).toBe('fable');
       expect(ast.title).toBe('Space Adventure');
       expect(ast.pages).toHaveLength(2);
-      expect(ast.statements).toHaveLength(3); // set, set, music
+      expect(ast.statements).toHaveLength(3); // init, init, music
       expect(ast.pages[0].autoAdvance).toBe(3000);
       expect(ast.pages[0].agents).toHaveLength(4); // text, image, image, button
       expect(ast.pages[1].agents).toHaveLength(6); // text, text, timer, button, image, image

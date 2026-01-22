@@ -9,7 +9,8 @@ FableDSL {
   PageContent = Agent | Statement | MusicStatement | TimerBlock
 
   // =========== Statements ===========
-  Statement = SetStatement | AddStatement | SubtractStatement
+  Statement = InitStatement | SetStatement | AddStatement | SubtractStatement
+  InitStatement = "init" identifier "to" Expression
   SetStatement = "set" identifier "to" Expression
   AddStatement = "add" Expression "to" identifier
   SubtractStatement = "subtract" Expression "from" identifier
