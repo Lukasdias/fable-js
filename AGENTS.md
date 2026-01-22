@@ -1,5 +1,12 @@
 # FableJS - Development Guidelines
 
+# Package Manager
+Use `pnpm` as the package manager for this project. Ensure you have it installed globally:
+
+```bash
+npm install -g pnpm 
+```
+
 ## 📁 File Naming Convention
 
 All files in this project **MUST** follow the **kebab-case** naming convention:
@@ -130,12 +137,79 @@ export function MyComponent({ }: MyComponentProps) {
 
 ## 🔍 Quality Checks
 
-Before committing:
+**When to use**: Run these checks before committing code changes or submitting pull requests.
+
 - [ ] Files use kebab-case naming
 - [ ] Components have proper TypeScript types
 - [ ] Performance optimizations applied
 - [ ] Design follows bold aesthetic direction
 - [ ] Bundle size considerations made
+
+## 🆕 New Contributor Checklist
+
+**When to use**: Complete this checklist when starting work on FableJS as a new contributor.
+
+- [ ] Install pnpm globally and verify installation
+- [ ] Read and understand kebab-case file naming convention
+- [ ] Load the three default skills (frontend-design, react-dev, vercel-best-practices) for any development task
+- [ ] Review the default workflow steps before starting work
+- [ ] Familiarize with design philosophy (bold aesthetics, typography, etc.)
+- [ ] Run quality checks before any commits
+- [ ] Understand code standards (PascalCase components, camelCase hooks, etc.)
+
+## 🔄 Default Workflow
+
+Every development session **MUST** follow this workflow to ensure consistency, quality, and adherence to project standards:
+
+### 1. Session Setup
+```bash
+# Always load these three skills at the start of any task
+use skill frontend-design
+use skill react-dev
+use skill vercel-best-practices
+```
+
+### 2. Task Understanding
+- Review the current codebase structure and existing patterns
+- Understand the specific task requirements and constraints
+- Check related files for context (imports, dependencies, conventions)
+
+### 3. Implementation
+- Follow **kebab-case** file naming convention for all new files
+- Apply proper TypeScript typing and React 19 patterns
+- Focus on performance optimization and bold design aesthetics
+- Use existing libraries and utilities from the codebase
+- Mimic existing code style and patterns
+
+### 4. Quality Assurance
+Before committing, **always run** these commands:
+```bash
+# Lint 
+pnpm run lint
+
+# Build all packages
+pnpm build
+
+# Run tests
+pnpm test
+```
+
+### 5. Commit Process (Only if User Requests)
+- Use descriptive commit messages focusing on "why" not "what"
+- Never commit files containing secrets or credentials
+- Ensure all quality checks pass before committing
+- Follow the project's commit message style from recent history
+
+### 6. Session Completion
+- Document any new patterns or decisions made during the session
+- Update this AGENTS.md file if new guidelines emerge
+- Provide clear feedback on what was accomplished
+
+### Key Reminders
+- **Never** commit unless explicitly requested by the user
+- **Always** follow security best practices (no secrets, proper logging)
+- **Always** verify builds and tests pass before considering work complete
+- **Never** introduce code that could be used maliciously
 
 ## 📞 Contact
 

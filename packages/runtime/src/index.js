@@ -2,7 +2,7 @@
 export { FablePlayer } from './components/FablePlayer.tsx';
 
 // Zustand store and selectors
-export { useRuntimeStore, useRuntimeSelectors } from './store/RuntimeStore.ts';
+export { useRuntimeStore, useRuntimeSelectors, useRuntimeActions } from './store/RuntimeStore.ts';
 
 // Engine classes (for advanced use cases)
 export { ExpressionEvaluator } from './engine/ExpressionEvaluator.ts';

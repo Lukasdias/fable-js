@@ -16,8 +16,8 @@ export interface FablePlayerProps {
 
 export declare const FablePlayer: React.FC<FablePlayerProps>;
 
-// Zustand store
-export { useRuntimeStore } from './store/RuntimeStore';
+// Zustand store and selectors
+export { useRuntimeStore, useRuntimeSelectors, useRuntimeActions } from './store/RuntimeStore';
 
 // Engine classes (for advanced use cases)
 export { ExpressionEvaluator } from './engine/ExpressionEvaluator';

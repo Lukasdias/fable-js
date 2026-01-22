@@ -6,6 +6,7 @@ import { PageTraveller } from './page-traveller'
 import { usePreviewSize } from '@/hooks/use-preview-size'
 import { useDSLParser } from '@/hooks/use-dsl-parser'
 import { DEFAULT_DSL } from '@/constants/default-dsl'
+import { useRuntimeStore, useRuntimeActions } from '@fable-js/runtime'
 
 export function FableEditor() {
   // State for editor content
@@ -23,6 +24,7 @@ export function FableEditor() {
   // Custom hooks
   const { ast, error } = useDSLParser(dsl)
   const previewSize = usePreviewSize(previewContainerRef, [isFullscreen])
+  const { goToPage, reset } = useRuntimeActions()
 
   // Derived state
   const hasUnsavedChanges = draft !== dsl
@@ -33,9 +35,11 @@ export function FableEditor() {
   }, [draft])
 
   const handleRestart = useCallback(() => {
+    // Reset the runtime store and restart the player
+    reset()
     setPlayerKey((prev) => prev + 1)
     setCurrentPage(1) // Reset to first page on restart
-  }, [])
+  }, [reset])
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((prev) => !prev)
@@ -46,12 +50,10 @@ export function FableEditor() {
   }, [])
 
   const handlePageSelect = useCallback((pageId: number) => {
-    // Use the runtime store to navigate to the specific page
-    // This would need to be implemented in the runtime package
-    // For now, we'll restart and track the target page
+    // Navigate to the specific page using the runtime store
+    goToPage(pageId)
     setCurrentPage(pageId)
-    setPlayerKey((prev) => prev + 1)
-  }, [])
+  }, [goToPage])
 
   const handlePlayerStateChange = useCallback((state: {
     currentPage: number
