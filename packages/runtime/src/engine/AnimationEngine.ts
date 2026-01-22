@@ -65,6 +65,31 @@ export interface AnimationOptions {
 }
 
 /**
+ * Stores original node values for restoration after animation ends.
+ */
+interface OriginalValues {
+  scaleX: number;
+  scaleY: number;
+  opacity: number;
+  rotation: number;
+  x: number;
+  y: number;
+}
+
+/**
+ * Frame object passed to Konva.Animation callback.
+ * Konva doesn't export this type, so we define it here.
+ */
+interface AnimationFrame {
+  /** Total elapsed time since animation start in milliseconds */
+  time: number;
+  /** Time since last frame in milliseconds */
+  timeDiff: number;
+  /** Current frame rate in frames per second */
+  frameRate: number;
+}
+
+/**
  * Manages Konva animations and tweens for Fable agents.
  * Provides methods for:
  * - Moving agents with tweening (move action)
@@ -76,6 +101,9 @@ export class AnimationEngine {
   
   /** Map of agent ID to their active Konva.Tween instances */
   private tweens: Map<string, Konva.Tween> = new Map();
+  
+  /** Map of agent ID to original values for restoration on stop */
+  private originalValues: Map<string, OriginalValues> = new Map();
   
   /** Callback to get agent ref by ID */
   private getAgentRef: (id: string) => Konva.Node | null;
@@ -131,6 +159,25 @@ export class AnimationEngine {
   }
 
   /**
+   * Restore original values for a node after animation stops.
+   */
+  private restoreOriginalValues(agentId: string): void {
+    const node = this.getAgentRef(agentId);
+    const original = this.originalValues.get(agentId);
+    
+    if (node && original) {
+      node.scaleX(original.scaleX);
+      node.scaleY(original.scaleY);
+      node.opacity(original.opacity);
+      node.rotation(original.rotation);
+      node.x(original.x);
+      node.y(original.y);
+    }
+    
+    this.originalValues.delete(agentId);
+  }
+
+  /**
    * Start a predefined animation on an agent.
    * DSL: `text #title "Bounce!" at [100, 100] animate "bounce" duration 1s repeat 3`
    */
@@ -146,7 +193,6 @@ export class AnimationEngine {
 
     const duration = options.duration || 1000;
     const repeat = options.repeat ?? -1; // -1 = infinite by default
-    let cycleCount = 0;
 
     const layer = node.getLayer();
     if (!layer) {
@@ -155,10 +201,44 @@ export class AnimationEngine {
     }
 
     // Store original values for restoration
-    const originalScale = { x: node.scaleX(), y: node.scaleY() };
-    const originalOpacity = node.opacity();
-    const originalRotation = node.rotation();
-    const originalPos = { x: node.x(), y: node.y() };
+    const originalValues: OriginalValues = {
+      scaleX: node.scaleX(),
+      scaleY: node.scaleY(),
+      opacity: node.opacity(),
+      rotation: node.rotation(),
+      x: node.x(),
+      y: node.y(),
+    };
+    this.originalValues.set(agentId, originalValues);
+
+    // Track animation start time and cycles completed
+    let animationStartTime: number | null = null;
+    let lastCycle = -1;
+
+    // Helper to check if animation should stop based on repeat count
+    const shouldStopAnimation = (frame: AnimationFrame): boolean => {
+      if (repeat < 0) return false; // Infinite
+      
+      if (animationStartTime === null) {
+        animationStartTime = frame.time;
+      }
+      
+      const elapsed = frame.time - animationStartTime!;
+      const currentCycle = Math.floor(elapsed / duration);
+      
+      if (currentCycle > lastCycle) {
+        lastCycle = currentCycle;
+      }
+      
+      return currentCycle >= repeat;
+    };
+
+    // Helper to stop animation and restore values
+    const finishAnimation = (anim: Konva.Animation): void => {
+      anim.stop();
+      this.animations.delete(agentId);
+      this.restoreOriginalValues(agentId);
+    };
 
     let animation: Konva.Animation;
 
@@ -166,20 +246,32 @@ export class AnimationEngine {
       case 'bounce':
         animation = new Konva.Animation((frame) => {
           if (!frame) return;
+          
+          if (shouldStopAnimation(frame)) {
+            finishAnimation(animation);
+            return;
+          }
+          
           const progress = (frame.time % duration) / duration;
           // Bounce uses sin for smooth up/down motion
           const bounce = Math.abs(Math.sin(progress * Math.PI));
-          node.y(originalPos.y - bounce * 20);
+          node.y(originalValues.y - bounce * 20);
         }, layer);
         break;
 
       case 'pulse':
         animation = new Konva.Animation((frame) => {
           if (!frame) return;
+          
+          if (shouldStopAnimation(frame)) {
+            finishAnimation(animation);
+            return;
+          }
+          
           const progress = (frame.time % duration) / duration;
           const scale = 1 + Math.sin(progress * Math.PI * 2) * 0.1;
-          node.scaleX(originalScale.x * scale);
-          node.scaleY(originalScale.y * scale);
+          node.scaleX(originalValues.scaleX * scale);
+          node.scaleY(originalValues.scaleY * scale);
         }, layer);
         break;
 
@@ -188,10 +280,12 @@ export class AnimationEngine {
         animation = new Konva.Animation((frame) => {
           if (!frame) return;
           const progress = Math.min(frame.time / duration, 1);
-          node.opacity(progress);
+          node.opacity(progress * originalValues.opacity);
           if (progress >= 1) {
             animation.stop();
             this.animations.delete(agentId);
+            // Don't restore for fade_in - keep the final opacity
+            this.originalValues.delete(agentId);
           }
         }, layer);
         break;
@@ -200,10 +294,12 @@ export class AnimationEngine {
         animation = new Konva.Animation((frame) => {
           if (!frame) return;
           const progress = Math.min(frame.time / duration, 1);
-          node.opacity(originalOpacity * (1 - progress));
+          node.opacity(originalValues.opacity * (1 - progress));
           if (progress >= 1) {
             animation.stop();
             this.animations.delete(agentId);
+            // Don't restore for fade_out - keep the final opacity (0)
+            this.originalValues.delete(agentId);
           }
         }, layer);
         break;
@@ -211,55 +307,40 @@ export class AnimationEngine {
       case 'spin':
         animation = new Konva.Animation((frame) => {
           if (!frame) return;
+          
+          if (shouldStopAnimation(frame)) {
+            finishAnimation(animation);
+            return;
+          }
+          
           const progress = (frame.time % duration) / duration;
-          node.rotation(originalRotation + progress * 360);
+          node.rotation(originalValues.rotation + progress * 360);
         }, layer);
         break;
 
       case 'shake':
+        // Shake uses a continuous oscillation without decay for looping
+        // Each cycle shakes and returns to center
         animation = new Konva.Animation((frame) => {
           if (!frame) return;
+          
+          if (shouldStopAnimation(frame)) {
+            finishAnimation(animation);
+            return;
+          }
+          
           const progress = (frame.time % duration) / duration;
-          // Shake effect using sin with decreasing amplitude
-          const shake = Math.sin(progress * Math.PI * 8) * 5 * (1 - progress);
-          node.x(originalPos.x + shake);
+          // Use a smooth oscillation that starts and ends at 0
+          // sin(0) = 0, sin(2*PI) = 0, with peaks in between
+          const shake = Math.sin(progress * Math.PI * 6) * 5 * Math.sin(progress * Math.PI);
+          node.x(originalValues.x + shake);
         }, layer);
         break;
 
       default:
         console.warn(`AnimationEngine: Unknown animation type "${options.type}"`);
+        this.originalValues.delete(agentId);
         return false;
-    }
-
-    // Handle repeat count
-    if (repeat > 0) {
-      const originalStart = animation.start.bind(animation);
-      const wrappedAnimation = animation;
-      let startTime = 0;
-      
-      wrappedAnimation.start = () => {
-        const result = originalStart();
-        // Check cycles in the animation frame callback
-        const checkCycles = new Konva.Animation((frame) => {
-          if (!frame) return;
-          const elapsed = frame.time - startTime;
-          const currentCycle = Math.floor(elapsed / duration);
-          if (currentCycle >= repeat) {
-            wrappedAnimation.stop();
-            checkCycles.stop();
-            this.animations.delete(agentId);
-            // Restore original values
-            node.scaleX(originalScale.x);
-            node.scaleY(originalScale.y);
-            node.opacity(originalOpacity);
-            node.rotation(originalRotation);
-            node.x(originalPos.x);
-            node.y(originalPos.y);
-          }
-        }, layer);
-        checkCycles.start();
-        return result;
-      };
     }
 
     this.animations.set(agentId, animation);
@@ -276,6 +357,7 @@ export class AnimationEngine {
     if (animation) {
       animation.stop();
       this.animations.delete(agentId);
+      this.restoreOriginalValues(agentId);
     }
   }
 
@@ -283,8 +365,13 @@ export class AnimationEngine {
    * Stop all animations and tweens. Call on cleanup.
    */
   stopAll(): void {
-    this.animations.forEach((anim) => anim.stop());
+    // Stop all animations and restore original values
+    this.animations.forEach((anim, agentId) => {
+      anim.stop();
+      this.restoreOriginalValues(agentId);
+    });
     this.animations.clear();
+    this.originalValues.clear();
     
     this.tweens.forEach((tween) => tween.destroy());
     this.tweens.clear();
