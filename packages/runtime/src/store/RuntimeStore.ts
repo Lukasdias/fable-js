@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { useShallow } from 'zustand/shallow';
 import type { Fable, Statement } from '@fable-js/parser';
 import { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js';
 import { AnimationEngine } from '../engine/AnimationEngine.js';
-import Konva from 'konva';
 
 export interface RuntimeState {
   // Story data
@@ -43,47 +43,66 @@ export interface RuntimeState {
   };
 }
 
-// Auto-generated selectors for optimized state access
-export const useRuntimeSelectors = () => {
-  // Use subscribeWithSelector for optimized re-renders
-  const currentPage = useRuntimeStore((state) => state.getCurrentPage());
-  const currentPageId = useRuntimeStore((state) => state.currentPage);
-  const variables = useRuntimeStore((state) => Object.fromEntries(state.variables));
-  const pageHistory = useRuntimeStore((state) => [...state.pageHistory]);
-  const storyTitle = useRuntimeStore((state) => state.ast?.title || 'Untitled Story');
-  const totalPages = useRuntimeStore((state) => state.ast?.pages.length || 0);
-  const isLoaded = useRuntimeStore((state) => state.ast !== null);
+// Individual selectors for optimized re-renders (prefer these over useRuntimeSelectors)
+export const useCurrentPage = () => useRuntimeStore((state) => state.getCurrentPage());
+export const useCurrentPageId = () => useRuntimeStore((state) => state.currentPage);
+export const useStoryTitle = () => useRuntimeStore((state) => state.ast?.title || 'Untitled Story');
+export const useTotalPages = () => useRuntimeStore((state) => state.ast?.pages.length || 0);
+export const useIsLoaded = () => useRuntimeStore((state) => state.ast !== null);
+export const useCanGoBack = () => useRuntimeStore((state) => state.pageHistory.length > 0);
 
-  // Actions (stable references)
-  const store = useRuntimeStore();
+// Shallow-compared selectors for objects/arrays (prevents infinite re-renders)
+export const useVariables = () => useRuntimeStore(
+  useShallow((state) => Object.fromEntries(state.variables))
+);
+export const usePageHistory = () => useRuntimeStore(
+  useShallow((state) => [...state.pageHistory])
+);
+
+// Actions hook (stable references, no re-renders on state changes)
+export const useRuntimeActions = () => useRuntimeStore(
+  useShallow((state) => ({
+    setVariable: state.setVariable,
+    getVariable: state.getVariable,
+    hasVariable: state.hasVariable,
+    goToPage: state.goToPage,
+    goBack: state.goBack,
+    executeStatements: state.executeStatements,
+    reset: state.reset,
+  }))
+);
+
+/**
+ * @deprecated Use individual selectors (useCurrentPage, useVariables, etc.) for better performance.
+ * This hook creates new objects on every call, which can cause unnecessary re-renders.
+ */
+export const useRuntimeSelectors = () => {
+  const currentPage = useCurrentPage();
+  const currentPageId = useCurrentPageId();
+  const variables = useVariables();
+  const pageHistory = usePageHistory();
+  const storyTitle = useStoryTitle();
+  const totalPages = useTotalPages();
+  const isLoaded = useIsLoaded();
+  const canGoBack = useCanGoBack();
+  const actions = useRuntimeActions();
 
   return {
-    // Current page state
     currentPage,
     currentPageId,
-
-    // Variables (shallow compared)
     variables,
-    getVariable: store.getVariable,
-    hasVariable: store.hasVariable,
-
-    // Navigation
+    getVariable: actions.getVariable,
+    hasVariable: actions.hasVariable,
     pageHistory,
-    canGoBack: pageHistory.length > 0,
-
-    // Story state
+    canGoBack,
     storyTitle,
     totalPages,
     isLoaded,
-
-    // Actions (stable references)
-    setVariable: store.setVariable,
-    goToPage: store.goToPage,
-    goBack: store.goBack,
-    executeStatements: store.executeStatements,
-    reset: store.reset,
-
-    // Advanced selectors
+    setVariable: actions.setVariable,
+    goToPage: actions.goToPage,
+    goBack: actions.goBack,
+    executeStatements: actions.executeStatements,
+    reset: actions.reset,
     getVariableValue: (name: string) => variables[name],
     hasNonZeroVariable: (name: string) => variables[name] !== undefined && variables[name] !== 0,
   };
@@ -101,14 +120,6 @@ export const useRuntimeStore = create<RuntimeState>()(
   animationEngine: null,
 
   setAst: (ast: Fable, preserveState = true) => {
-    console.log('🏪 RuntimeStore Debug - setAst called:', {
-      ast,
-      preserveState,
-      astPages: ast.pages,
-      astPageIds: ast.pages.map(p => ({ id: p.id, type: typeof p.id })),
-      firstPageId: ast.pages.length > 0 ? ast.pages[0].id : 'no pages'
-    });
-
     // Collect all DSL-defined variables (from both init and set statements)
     const dslVariables = new Set<string>();
     
@@ -161,21 +172,18 @@ export const useRuntimeStore = create<RuntimeState>()(
         if (stmt.type === 'init' || stmt.type === 'set') {
           const value = evaluator.evaluate(stmt.value);
           newVariables.set(stmt.variable, value);
-          console.log(`  📝 ${stmt.type === 'init' ? 'Init' : 'Set'} ${stmt.variable} = ${value}`);
         }
       });
     };
 
     // Execute fable-level init statements first
     if (ast.statements) {
-      console.log('📜 setAst: Executing fable-level statements:', ast.statements);
       executeInitStatements(ast.statements);
     }
 
     // Execute initial page statements (e.g., init roll to random 1..6)
     const firstPage = ast.pages[0];
     if (firstPage?.statements) {
-      console.log('📜 setAst: Executing initial page statements:', firstPage.statements);
       executeInitStatements(firstPage.statements);
     }
 
@@ -241,7 +249,6 @@ export const useRuntimeStore = create<RuntimeState>()(
           // In runtime, we treat it the same as set
           const initValue = evaluator.evaluate(stmt.value);
           get().setVariable(stmt.variable, initValue);
-          console.log(`📝 Init ${stmt.variable} = ${initValue}`);
           break;
 
         case 'set':
@@ -314,14 +321,7 @@ export const useRuntimeStore = create<RuntimeState>()(
   // Computed properties
   getCurrentPage: () => {
     const { ast, currentPage } = get();
-    const foundPage = ast?.pages.find(page => page.id === currentPage);
-    console.log('🔍 getCurrentPage Debug:', {
-      currentPage,
-      currentPageType: typeof currentPage,
-      availablePages: ast?.pages.map(p => ({ id: p.id, type: typeof p.id })),
-      foundPage: foundPage ? { id: foundPage.id, agentsCount: foundPage.agents?.length || 0 } : null
-    });
-    return foundPage;
+    return ast?.pages.find(page => page.id === currentPage);
   },
 
   getState: () => {
