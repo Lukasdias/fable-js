@@ -42,15 +42,17 @@ const DEFAULT_DSL = `fable "My Interactive Story" do
   end
 
   page 2 do
+    init roll to random 1..6
+    init critical to false
+
     text "Page 2 - Expressions Demo" at [50, 50]
     text "Random number: {roll}" at [50, 100]
-    init roll to random 1..6
 
     button "Roll Dice" at [50, 150] do
       on_click do
         set roll to random 1..6
         // Check if critical hit or miss
-        init critical to roll == 6 or roll == 1
+        set critical to roll == 6 or roll == 1
       end
     end
 
