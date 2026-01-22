@@ -3,14 +3,27 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { FablePlayer } from '@fable-js/runtime'
 import { parseDSL, validateDSL, type Fable } from '@fable-js/parser'
-import { FableMonacoEditor } from '@fable-js/editor'
-import { cn } from '@/lib/utils'
-import { EXAMPLES } from '@/lib/examples'
+import { cn } from '@/src/lib/utils'
+import { EXAMPLES } from '@/src/lib/examples'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, Play, FileText, Eye } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import dynamic from 'next/dynamic'
+
+// Dynamically import Monaco editor to avoid SSR issues
+const FableMonacoEditor = dynamic(() => import('@fable-js/editor').then(mod => ({ default: mod.FableMonacoEditor })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex-1 min-h-0 flex items-center justify-center bg-muted/50 border rounded">
+      <div className="text-center">
+        <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading editor...</p>
+      </div>
+    </div>
+  )
+})
 
 const DEFAULT_DSL = `fable "My Interactive Story" do
   page 1 do

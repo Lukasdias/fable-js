@@ -2,7 +2,15 @@
 const nextConfig = {
   typedRoutes: true,
   transpilePackages: ['@fable-js/parser', '@fable-js/runtime'],
-  webpack: (config) => {
+  turbopack: {
+    rules: {
+      '*.node': {
+        loaders: [],
+        as: '*.js',
+      },
+    },
+  },
+  webpack: (config: any) => {
     // Handle Konva canvas dependency for client-side only
     config.resolve.fallback = {
       ...config.resolve.fallback,

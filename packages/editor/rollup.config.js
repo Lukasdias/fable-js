@@ -16,7 +16,7 @@ export default {
       sourcemap: true
     }
   ],
-  external: ['react', 'react-dom', '@fable-js/parser', 'monaco-editor'],
+  external: ['react', 'react-dom', 'monaco-editor'],
   plugins: [
     nodeResolve({
       preferBuiltins: true
