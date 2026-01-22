@@ -186,8 +186,8 @@ describe('FableJS DSL Parser', () => {
 
       expect(buttonAgent.events).toHaveLength(1);
       expect(buttonAgent.events[0].type).toBe('on_click');
-      expect(buttonAgent.events[0].action[0].type).toBe('go_to_page');
-      expect(buttonAgent.events[0].action[0].target).toBe(2);
+      expect(buttonAgent.events[0].statements[0].type).toBe('go_to_page');
+      expect(buttonAgent.events[0].statements[0].target).toBe(2);
     });
 
     it('should handle multiple agents on the same page', () => {
@@ -232,9 +232,9 @@ describe('FableJS DSL Parser', () => {
 
       expect(buttonAgent.events).toHaveLength(2);
       expect(buttonAgent.events[0].type).toBe('on_hover');
-      expect(buttonAgent.events[0].action[0].target).toBe(2);
+      expect(buttonAgent.events[0].statements[0].target).toBe(2);
       expect(buttonAgent.events[1].type).toBe('on_drag');
-      expect(buttonAgent.events[1].action[0].target).toBe(3);
+      expect(buttonAgent.events[1].statements[0].target).toBe(3);
     });
 
     it('should parse on_drop event', () => {
@@ -254,7 +254,7 @@ describe('FableJS DSL Parser', () => {
       const buttonAgent = ast.pages[0].agents[0];
 
       expect(buttonAgent.events[0].type).toBe('on_drop');
-      expect(buttonAgent.events[0].action[0].target).toBe(5);
+      expect(buttonAgent.events[0].statements[0].target).toBe(5);
     });
   });
 
@@ -631,9 +631,9 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set can_attack to health > 0 && mana >= 10
-            set should_flee to health < 20 || enemy_count > 5
-            set is_dead to !is_alive
+            set can_attack to health > 0 and mana >= 10
+            set should_flee to health < 20 or enemy_count > 5
+            set is_dead to not is_alive
           end
         end
       `;
@@ -708,7 +708,7 @@ describe('FableJS DSL Parser', () => {
       const dsl = `
         fable "Test" do
           page 1 do
-            set result to 2 + 3 * 4 == 14 && true
+            set result to 2 + 3 * 4 == 14 and true
           end
         end
       `;
@@ -854,7 +854,7 @@ describe('FableJS DSL Parser', () => {
 
       const ast = parseDSL(dsl);
       const button = ast.pages[0].agents[0];
-      const actions = button.events[0].action;
+      const actions = button.events[0].statements;
 
       expect(actions).toHaveLength(4);
       expect(actions[0]).toEqual({
@@ -999,7 +999,7 @@ describe('FableJS DSL Parser', () => {
       `;
 
       const ast = parseDSL(dsl);
-      const actions = ast.pages[0].agents[0].events[0].action;
+      const actions = ast.pages[0].agents[0].events[0].statements;
 
       expect(actions[0]).toEqual({
         type: 'move',

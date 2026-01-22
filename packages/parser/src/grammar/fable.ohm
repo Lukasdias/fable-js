@@ -24,7 +24,7 @@ FableDSL {
         | WaitBlock
 
    TextAgent   = "text" InterpolatedString "at" Position AnimateOption?
-   ButtonAgent = "button" StringLiteral "at" Position AnimateOption? ("do" Event* "end")?
+   ButtonAgent = "button" StringLiteral "at" Position AnimateOption? "do" Event* "end"
    ImageAgent  = "image" StringLiteral "at" Position AnimateOption?
   VideoAgent  = "video" StringLiteral "at" Position
 
@@ -72,7 +72,43 @@ FableDSL {
   Range = NumberLiteral ".." NumberLiteral
 
   // =========== Expressions ===========
-  Expression = RandomExpr | PickOneExpr | NumberLiteral | BooleanLiteral | StringLiteral | identifier
+  Expression = LogicalExpr
+  
+  LogicalExpr = LogicalExpr "or" AndExpr  -- or
+              | AndExpr
+  
+  AndExpr = AndExpr "and" CompExpr  -- and
+          | CompExpr
+  
+  CompExpr = AddExpr "==" AddExpr  -- equal
+           | AddExpr "!=" AddExpr  -- not_equal
+           | AddExpr "<=" AddExpr  -- less_equal
+           | AddExpr ">=" AddExpr  -- greater_equal
+           | AddExpr "<" AddExpr   -- less
+           | AddExpr ">" AddExpr   -- greater
+           | AddExpr
+  
+  AddExpr = AddExpr "+" MulExpr  -- plus
+          | AddExpr "-" MulExpr  -- minus
+          | MulExpr
+  
+  MulExpr = MulExpr "*" UnaryExpr  -- times
+          | MulExpr "/" UnaryExpr  -- div
+          | MulExpr "%" UnaryExpr  -- mod
+          | UnaryExpr
+  
+  UnaryExpr = "not" UnaryExpr  -- not
+            | "-" UnaryExpr    -- neg
+            | PrimaryExpr
+  
+  PrimaryExpr = "(" Expression ")"  -- paren
+              | RandomExpr
+              | PickOneExpr
+              | NumberLiteral
+              | BooleanLiteral
+              | StringLiteral
+              | identifier
+
   RandomExpr = "random" Range
   PickOneExpr = "pick_one" List
    List = "[" ListItems "]"

@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "build": "rollup -c",
+    "grammar": "ohm generateBundles --withTypes --esm 'src/grammar/*.ohm'",
+    "build": "pnpm grammar && rollup -c",
     "dev": "rollup -c -w",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -37,8 +38,9 @@
     "ohm-js": "^17.3.0"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@ohm-js/cli": "^2.0.1",
     "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-typescript": "^11.0.0",
     "rollup": "^4.0.0",
     "typescript": "^5.6.0",

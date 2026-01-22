@@ -165,7 +165,7 @@ export function createSemantics(grammar) {
     Event(eventType, _do, actions, _end) {
       return {
         type: eventType.toAST(),
-        action: actions.children.map(a => a.toAST())
+        statements: actions.children.map(a => a.toAST())
       };
     },
     
@@ -471,10 +471,18 @@ export function createSemantics(grammar) {
       };
     },
 
-    PrimaryExpr_not(_op, expr) {
+    UnaryExpr_not(_op, expr) {
       return {
         type: 'unary_op',
         operator: '!',
+        operand: expr.toAST()
+      };
+    },
+
+    UnaryExpr_neg(_op, expr) {
+      return {
+        type: 'unary_op',
+        operator: '-',
         operand: expr.toAST()
       };
     },

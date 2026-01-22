@@ -11,10 +11,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as monaco from 'monaco-editor'
 
 const DEFAULT_DSL = `fable "My Interactive Story" do
-  page 1 do
-    set score to 0
-    set health to 100
+  set score to 0
+  set health to 100
+  set alive to true
 
+  page 1 do
     text "Welcome to the adventure!" at [50, 50]
     text "Score: {score} | Health: {health}" at [50, 80]
 
@@ -22,12 +23,40 @@ const DEFAULT_DSL = `fable "My Interactive Story" do
       on_click do
         set score to score + 10
         set health to health - 5
+        // Using logical operators
+        set alive to health > 0 and not (score < 0)
       end
     end
 
     button "Rest" at [250, 150] do
       on_click do
         set health to health + 20
+      end
+    end
+
+    button "Go to Page 2" at [450, 150] do
+      on_click do
+        go_to_page 2
+      end
+    end
+  end
+
+  page 2 do
+    text "Page 2 - Expressions Demo" at [50, 50]
+    text "Random number: {roll}" at [50, 100]
+    set roll to random 1..6
+
+    button "Roll Dice" at [50, 150] do
+      on_click do
+        set roll to random 1..6
+        // Check if critical hit or miss
+        set critical to roll == 6 or roll == 1
+      end
+    end
+
+    button "Back to Page 1" at [250, 150] do
+      on_click do
+        go_to_page 1
       end
     end
   end
