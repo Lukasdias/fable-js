@@ -25,6 +25,7 @@ export const FableMonacoEditor: React.FC<FableMonacoEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const subscriptionRef = useRef<monaco.IDisposable | null>(null);
+  const isUpdatingRef = useRef(false);
 
   // Register language and theme on mount
   useEffect(() => {
@@ -97,6 +98,11 @@ export const FableMonacoEditor: React.FC<FableMonacoEditorProps> = ({
 
     editorRef.current = monaco.editor.create(containerRef.current, defaultOptions);
 
+    // Set initial value
+    if (value) {
+      editorRef.current.setValue(value);
+    }
+
     // Set the language on the model
     const model = editorRef.current.getModel();
     if (model) {
@@ -108,6 +114,9 @@ export const FableMonacoEditor: React.FC<FableMonacoEditorProps> = ({
 
     // Setup change listener with debounced operations
     subscriptionRef.current = editorRef.current.onDidChangeModelContent(() => {
+      // Skip if we're programmatically updating the value
+      if (isUpdatingRef.current) return;
+
       const newValue = editorRef.current?.getValue() || '';
 
       // Always call onChange - parent will handle deduplication if needed
@@ -141,12 +150,22 @@ export const FableMonacoEditor: React.FC<FableMonacoEditorProps> = ({
         editorRef.current.dispose();
       }
     };
-  }, [value, theme]); // Removed onChange, onMount, options from deps to prevent re-creation
+  }, [theme]); // Only recreate on theme change, not value change
 
-  // Update value when prop changes
+  // Update value when prop changes (but not when editor itself triggered the change)
   useEffect(() => {
     if (editorRef.current && value !== editorRef.current.getValue()) {
+      isUpdatingRef.current = true;
+      const currentPosition = editorRef.current.getPosition();
       editorRef.current.setValue(value);
+      // Try to restore cursor position
+      if (currentPosition) {
+        editorRef.current.setPosition(currentPosition);
+      }
+      // Reset the flag after a short delay to allow the change event to be ignored
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 0);
     }
   }, [value]);
 
