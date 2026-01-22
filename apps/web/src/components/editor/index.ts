@@ -1,3 +1,3 @@
-export { EditorToolbar } from './EditorToolbar'
-export { EditorPanel } from './EditorPanel'
-export { PreviewPanel } from './PreviewPanel'
+export { EditorToolbar } from './editor-toolbar'
+export { EditorPanel } from './editor-panel'
+export { PreviewPanel } from './preview-panel'

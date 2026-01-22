@@ -167,6 +167,19 @@ export const EditorToolbar = memo(function EditorToolbar({
 
       {/* Right section - Actions */}
       <div className="flex items-center gap-2">
+        {/* Page traveller toggle */}
+        {onTogglePageTraveller && (
+          <Button
+            onClick={onTogglePageTraveller}
+            size="icon-sm"
+            variant={showPageTraveller ? 'default' : 'soft'}
+            className="rounded-lg mr-2"
+            title="Toggle page navigator sidebar"
+          >
+            <Map className="h-4 w-4" />
+          </Button>
+        )}
+
         {/* Save button */}
         <Button
           onClick={onSave}
@@ -178,36 +191,6 @@ export const EditorToolbar = memo(function EditorToolbar({
           <Save className="h-4 w-4" />
           <span className="hidden sm:inline">Save</span>
         </Button>
-
-        {/* Restart button */}
-        <Button
-          onClick={onRestart}
-          size="sm"
-          variant="ghost"
-          disabled={!hasAst}
-          className="gap-2"
-        >
-          <RotateCcw className="h-4 w-4" />
-          <span className="hidden sm:inline">Restart</span>
-        </Button>
-
-        {/* Divider */}
-        <div className="h-6 w-px bg-border/50 mx-1" />
-
-        {/* Page traveller toggle */}
-        {onTogglePageTraveller && (
-          <>
-            <Button
-              onClick={onTogglePageTraveller}
-              size="icon-sm"
-              variant={showPageTraveller ? 'default' : 'soft'}
-              className="rounded-lg"
-            >
-              <Map className="h-4 w-4" />
-            </Button>
-            <div className="h-6 w-px bg-border/50 mx-1" />
-          </>
-        )}
 
         {/* Theme toggle */}
         <ThemeToggle />
