@@ -5,7 +5,7 @@
  * Converts FableDSL code into an AST for rendering in React/Canvas.
  */
 
-import { createSemantics } from './semantics/toAST.js';
+import { createSemantics } from './semantics/to-ast.js';
 import grammar from './grammar/fable.ohm-bundle.js';
 
 /**
@@ -54,9 +54,10 @@ export function validateDSL(source: string) {
     return { valid: true };
   }
 
+  // Type assertion needed because TypeScript can't narrow the union type properly
   return {
     valid: false,
-    error: matchResult.message
+    error: (matchResult as any).message
   };
 }
 
