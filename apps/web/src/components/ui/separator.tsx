@@ -1,12 +1,12 @@
 'use client'
 
 import * as React from 'react'
-import * as SeparatorPrimitive from '@radix-ui/react-separator'
+import { Separator as SeparatorComponent } from 'radix-ui'
 import { cn } from '@/lib/utils'
 
 const Separator = React.forwardRef<
-  React.ElementRef<typeof SeparatorPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root> & {
+  React.ElementRef<typeof SeparatorComponent.Root>,
+  React.ComponentPropsWithoutRef<typeof SeparatorComponent.Root> & {
     /** Optional gradient variant */
     variant?: 'default' | 'gradient' | 'dashed'
   }
@@ -21,7 +21,7 @@ const Separator = React.forwardRef<
     },
     ref
   ) => (
-    <SeparatorPrimitive.Root
+    <SeparatorComponent.Root
       ref={ref}
       decorative={decorative}
       orientation={orientation}
@@ -41,6 +41,6 @@ const Separator = React.forwardRef<
     />
   )
 )
-Separator.displayName = SeparatorPrimitive.Root.displayName
+Separator.displayName = SeparatorComponent.Root.displayName
 
 export { Separator }

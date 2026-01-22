@@ -1,16 +1,16 @@
 'use client'
 
 import * as React from 'react'
-import * as TabsPrimitive from '@radix-ui/react-tabs'
+import { Tabs as TabsComponent } from 'radix-ui'
 import { cn } from '@/lib/utils'
 
-const Tabs = TabsPrimitive.Root
+const Tabs = TabsComponent.Root
 
 const TabsList = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.List>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+  React.ElementRef<typeof TabsComponent.List>,
+  React.ComponentPropsWithoutRef<typeof TabsComponent.List>
 >(({ className, ...props }, ref) => (
-  <TabsPrimitive.List
+  <TabsComponent.List
     ref={ref}
     className={cn(
       // Pill container with soft background
@@ -23,13 +23,13 @@ const TabsList = React.forwardRef<
     {...props}
   />
 ))
-TabsList.displayName = TabsPrimitive.List.displayName
+TabsList.displayName = TabsComponent.List.displayName
 
 const TabsTrigger = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+  React.ElementRef<typeof TabsComponent.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsComponent.Trigger>
 >(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
+  <TabsComponent.Trigger
     ref={ref}
     className={cn(
       // Base styles
@@ -39,38 +39,38 @@ const TabsTrigger = React.forwardRef<
       'text-sm font-medium',
       'transition-all duration-200',
       'select-none',
-      
+
       // Default state - subtle
       'text-muted-foreground',
       'hover:text-foreground',
       'hover:bg-background/50',
-      
+
       // Focus state
       'ring-offset-background',
       'focus-visible:outline-none',
       'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-      
+
       // Disabled
       'disabled:pointer-events-none disabled:opacity-50',
-      
+
       // Active state - elevated with shadow
       'data-[state=active]:bg-background',
       'data-[state=active]:text-foreground',
       'data-[state=active]:shadow-sm',
       'data-[state=active]:shadow-black/5',
-      
+
       className
     )}
     {...props}
   />
 ))
-TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
+TabsTrigger.displayName = TabsComponent.Trigger.displayName
 
 const TabsContent = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+  React.ElementRef<typeof TabsComponent.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsComponent.Content>
 >(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
+  <TabsComponent.Content
     ref={ref}
     className={cn(
       // Smooth entrance animation
@@ -78,16 +78,16 @@ const TabsContent = React.forwardRef<
       'ring-offset-background',
       'focus-visible:outline-none',
       'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-      
+
       // Animation
       'data-[state=active]:animate-fade-in',
       'data-[state=inactive]:hidden',
-      
+
       className
     )}
     {...props}
   />
 ))
-TabsContent.displayName = TabsPrimitive.Content.displayName
+TabsContent.displayName = TabsComponent.Content.displayName
 
 export { Tabs, TabsList, TabsTrigger, TabsContent }
