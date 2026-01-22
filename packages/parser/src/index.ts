@@ -11,9 +11,9 @@ import grammar from './grammar/fable.ohm-bundle.js';
 /**
  * Parse FableDSL source code into an AST
  *
- * @param {string} source - DSL source code
- * @returns {import('./types').Fable} The parsed AST
- * @throws {Error} with line/column info on parse failure
+ * @param source - DSL source code
+ * @returns The parsed AST
+ * @throws Error with line/column info on parse failure
  *
  * @example
  * ```js
@@ -29,14 +29,14 @@ import grammar from './grammar/fable.ohm-bundle.js';
  * console.log(ast.pages[0].agents[0].content); // "Hello World"
  * ```
  */
-export function parseDSL(source) {
+export function parseDSL(source: string) {
   const matchResult = grammar.match(source);
-  
+
   if (matchResult.failed()) {
     // Ohm provides excellent error messages with line/column info
     throw new Error(matchResult.message);
   }
-  
+
   const semantics = createSemantics(grammar);
   return semantics(matchResult).toAST();
 }
@@ -44,10 +44,10 @@ export function parseDSL(source) {
 /**
  * Check if source code is valid FableDSL without throwing
  *
- * @param {string} source - DSL source code
- * @returns {{ valid: boolean, error?: string }} Validation result
+ * @param source - DSL source code
+ * @returns Validation result
  */
-export function validateDSL(source) {
+export function validateDSL(source: string) {
   const matchResult = grammar.match(source);
 
   if (matchResult.succeeded()) {
@@ -72,3 +72,25 @@ export function getGrammar() {
 
 // Export for advanced usage
 export { grammar, createSemantics };
+
+// Export types
+export type {
+  Fable,
+  Page,
+  Agent,
+  VisualAgent,
+  TextAgent,
+  ButtonAgent,
+  ImageAgent,
+  VideoAgent,
+  BaseAgent,
+  Event,
+  Action,
+  Statement,
+  Expression,
+  InterpolatedString,
+  Position,
+  Range,
+  ValidationResult,
+  EventType
+} from './types';

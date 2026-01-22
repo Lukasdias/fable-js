@@ -12,7 +12,7 @@ const copyTypes = () => ({
 });
 
 export default {
-  input: 'src/index.js',
+  input: 'src/index.ts',
   output: [
     {
       file: 'dist/index.js',
