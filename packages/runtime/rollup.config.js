@@ -31,7 +31,11 @@ export default {
     babel({
       presets: ['@babel/preset-react', '@babel/preset-typescript'],
       babelHelpers: 'bundled',
-      exclude: 'node_modules/**'
+      exclude: [
+        'node_modules/**',
+        '**/*.min.js',
+        '**/react-reconciler/**'
+      ]
     })
   ]
 };
