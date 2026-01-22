@@ -1,13 +1,13 @@
 import React, { useEffect, useCallback, useRef, useMemo, memo } from 'react'
 import { Stage, Layer } from 'react-konva'
 import type { Fable, Agent, Event, TextAgent, ButtonAgent, ImageAgent } from '@fable-js/parser'
-import { useRuntimeStore } from '../store/RuntimeStore.js'
-import { FableRuntimeContext, type FableContextValue } from '../context/FableContext.js'
-import { AnimationEngine } from '../engine/AnimationEngine.js'
+import { useRuntimeStore } from '../store/runtime-store.js'
+import { FableRuntimeContext, type FableContextValue } from '../context/fable-context.js'
+import { AnimationEngine } from '../engine/animation-engine.js'
 import { useCanvasScale, useAgentRefs } from '../hooks/index.js'
-import { FableText } from './FableText.js'
-import { FableButton } from './FableButton.js'
-import { FableImage } from './FableImage.js'
+import { FableText } from './fable-text.js'
+import { FableButton } from './fable-button.js'
+import { FableImage } from './fable-image.js'
 
 export interface FablePlayerProps {
   ast: Fable

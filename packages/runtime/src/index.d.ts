@@ -17,12 +17,12 @@ export interface FablePlayerProps {
 export declare const FablePlayer: React.FC<FablePlayerProps>;
 
 // Zustand store and selectors
-export { useRuntimeStore, useRuntimeSelectors, useRuntimeActions } from './store/RuntimeStore';
+export { useRuntimeStore, useRuntimeSelectors, useRuntimeActions } from './store/runtime-store';
 
 // Engine classes (for advanced use cases)
-export { ExpressionEvaluator } from './engine/ExpressionEvaluator';
+export { ExpressionEvaluator } from './engine/expression-evaluator';
 
 // Component types for advanced usage
-export type { FableTextProps } from './components/FableText';
-export type { FableButtonProps } from './components/FableButton';
-export type { FableImageProps } from './components/FableImage';
+export type { FableTextProps } from './components/fable-text';
+export type { FableButtonProps } from './components/fable-button';
+export type { FableImageProps } from './components/fable-image';

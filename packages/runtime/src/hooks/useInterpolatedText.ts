@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { InterpolatedString } from '@fable-js/parser'
-import { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js'
+import { ExpressionEvaluator } from '../engine/expression-evaluator.js'
 
 /**
  * Hook to evaluate interpolated strings with current variables.

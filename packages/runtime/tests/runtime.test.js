@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { FableState } from '../src/engine/FableState.js';
-import { ExpressionEvaluator } from '../src/engine/ExpressionEvaluator.js';
+import { FableState } from '../src/engine/fable-state.js';
+import { ExpressionEvaluator } from '../src/engine/expression-evaluator.js';
 
 describe('Runtime Engine', () => {
   it('should create fable state', () => {

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type Konva from 'konva'
-import { useFableContext } from '../context/FableContext.js'
+import { useFableContext } from '../context/fable-context.js'
 
 /**
  * Hook to register an agent's Konva node ref for animations/tweening.

@@ -1,5 +1,5 @@
 // Main exports
-export { FableMonacoEditor } from './components/FableMonacoEditor.js';
+export { FableMonacoEditor } from './components/fable-monaco-editor.js';
 
 // Language and theme utilities
 export { registerFableLanguage } from './lib/fable-language.js';

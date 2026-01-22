@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { useShallow } from 'zustand/shallow';
 import type { Fable, Statement } from '@fable-js/parser';
-import { ExpressionEvaluator } from '../engine/ExpressionEvaluator.js';
-import { AnimationEngine } from '../engine/AnimationEngine.js';
+import { ExpressionEvaluator } from '../engine/expression-evaluator.js';
+import { AnimationEngine } from '../engine/animation-engine.js';
 
 export interface RuntimeState {
   // Story data
