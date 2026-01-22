@@ -1,13 +1,12 @@
 'use client'
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { FableMonacoEditor } from '@fable-js/editor'
 import { parseDSL, type Fable } from '@fable-js/parser'
 import { FablePlayer } from '@fable-js/runtime'
 import { AlertCircle, Code, Maximize2, Minimize2, Play, RotateCcw, Save } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const DEFAULT_DSL = `fable "Interactive Animation Demo" do
   init score to 0
@@ -104,6 +103,23 @@ const DEFAULT_DSL = `fable "Interactive Animation Demo" do
       on_click do
         go_to_page 1
       end
+    end
+
+    button #to-end-btn "Go to The End" at [400, 320] animate "fade_in" duration 500ms do
+      on_click do
+        go_to_page 3
+      end
+    end
+  end
+
+  page 3 do
+    text #end-text "The End! Thanks for trying FableJS!" at [150, 200] animate "pulse" duration 2s
+    button #restart-btn "Restart Demo" at [250, 300] do
+      on_click do
+        go_to_page 1
+        set score to 0
+        set health to 100
+      end   
     end
   end
 end`
