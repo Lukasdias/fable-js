@@ -82,6 +82,12 @@ export const FableMonacoEditor: React.FC<FableMonacoEditorProps> = ({
       wordWrap: 'on',
       wordWrapColumn: 80,
       rulers: [80],
+      // Hover settings
+      hover: {
+        enabled: true,
+        delay: 300,
+        sticky: true,
+      },
       quickSuggestions: {
         other: true,
         comments: false,
