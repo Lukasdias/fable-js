@@ -27,7 +27,7 @@ export const EditorToolbar = memo(function EditorToolbar({
     <div className="h-12 border-b border-zinc-800 bg-zinc-900 px-4 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
             <Play className="h-4 w-4 text-white fill-white" />
           </div>
           <span className="font-semibold text-white">FableJS</span>
