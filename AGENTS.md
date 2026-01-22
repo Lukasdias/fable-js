@@ -211,6 +211,93 @@ pnpm test
 - **Always** verify builds and tests pass before considering work complete
 - **Never** introduce code that could be used maliciously
 
+## 🧪 DSL Extension Workflow
+
+### Extending the FableDSL Language
+
+When adding new commands, directives, or features to FableDSL, follow this systematic approach:
+
+#### 1. **Understand the Grammar Structure**
+```typescript
+// Located in: packages/parser/src/grammar/fable.ohm-bundle.d.ts
+// This defines the language syntax and parsing rules
+```
+
+#### 2. **Add Type Definitions**
+```typescript
+// Located in: packages/parser/src/types.d.ts
+// Add new types for your feature
+interface NewDirective {
+  type: 'new-directive';
+  // ... properties
+}
+```
+
+#### 3. **Update Parser Semantics**
+```typescript
+// Located in: packages/parser/src/grammar/fable.ohm-bundle.d.ts
+// Add semantic actions to convert AST nodes
+```
+
+#### 4. **Implement Runtime Logic**
+```typescript
+// Located in: packages/runtime/src/
+// Add components, engines, or utilities for the new feature
+```
+
+#### 5. **Update Editor Support**
+```typescript
+// Located in: packages/editor/src/
+// Add syntax highlighting, autocompletion, validation
+```
+
+#### 6. **Add Tests**
+```typescript
+// Located in: packages/*/tests/
+// Unit tests, integration tests, and examples
+```
+
+#### 7. **Update Documentation**
+- Add examples to `apps/web/src/constants/default-dsl.ts`
+- Update this AGENTS.md with new feature documentation
+- Create usage examples in comments
+
+### Using the DSL Extension Skill
+
+For creating new DSL commands, use this local skill:
+
+```bash
+use skill fable-dsl-extension
+```
+
+This skill provides:
+- **DSL Grammar Analysis** - Understand current syntax rules
+- **Type Definition Generation** - Create proper TypeScript interfaces
+- **Runtime Implementation** - Generate component and engine code
+- **Editor Integration** - Add syntax highlighting and validation
+- **Testing Templates** - Generate comprehensive test suites
+
+### Example: Adding a New Animation
+
+```bash
+# Use the DSL extension skill
+use skill fable-dsl-extension
+
+# Describe the new feature
+create dsl command "bounce" for "animations" with properties:
+- duration: number (default: 500ms)
+- intensity: "gentle" | "medium" | "intense" (default: "medium")
+- repeat: number (default: 1)
+
+# The skill will generate:
+# 1. Type definitions in types.d.ts
+# 2. Parser grammar updates
+# 3. Runtime animation component
+# 4. Editor syntax highlighting
+# 5. Test cases
+# 6. Documentation updates
+```
+
 ## 📞 Contact
 
 For questions about these guidelines, check the existing codebase or ask in development discussions.
