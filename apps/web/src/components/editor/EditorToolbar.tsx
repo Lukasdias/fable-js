@@ -3,6 +3,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import {
   AlertCircle,
   BookOpen,
+  Map,
   Maximize2,
   Minimize2,
   RotateCcw,
@@ -17,9 +18,11 @@ interface EditorToolbarProps {
   hasError: boolean
   hasAst: boolean
   isFullscreen: boolean
+  showPageTraveller?: boolean
   onSave: () => void
   onRestart: () => void
   onToggleFullscreen: () => void
+  onTogglePageTraveller?: () => void
 }
 
 // Animated logo component
@@ -131,9 +134,11 @@ export const EditorToolbar = memo(function EditorToolbar({
   hasError,
   hasAst,
   isFullscreen,
+  showPageTraveller = false,
   onSave,
   onRestart,
   onToggleFullscreen,
+  onTogglePageTraveller,
 }: EditorToolbarProps) {
   return (
     <header
@@ -188,6 +193,21 @@ export const EditorToolbar = memo(function EditorToolbar({
 
         {/* Divider */}
         <div className="h-6 w-px bg-border/50 mx-1" />
+
+        {/* Page traveller toggle */}
+        {onTogglePageTraveller && (
+          <>
+            <Button
+              onClick={onTogglePageTraveller}
+              size="icon-sm"
+              variant={showPageTraveller ? 'default' : 'soft'}
+              className="rounded-lg"
+            >
+              <Map className="h-4 w-4" />
+            </Button>
+            <div className="h-6 w-px bg-border/50 mx-1" />
+          </>
+        )}
 
         {/* Theme toggle */}
         <ThemeToggle />

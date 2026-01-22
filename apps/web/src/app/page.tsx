@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 
-const FableEditor = dynamic(() => import('@/components/FableEditor').then(mod => ({ default: mod.FableEditor })), {
+const FableEditor = dynamic(() => import('@/components/fable-editor').then(mod => ({ default: mod.FableEditor })), {
   ssr: false,
   loading: () => (
     <div className="h-screen flex items-center justify-center bg-background">

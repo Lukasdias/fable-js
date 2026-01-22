@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { EditorToolbar, EditorPanel, PreviewPanel } from './editor'
+import { PageTraveller } from './page-traveller'
 import { usePreviewSize } from '@/hooks/use-preview-size'
 import { useDSLParser } from '@/hooks/use-dsl-parser'
 import { DEFAULT_DSL } from '@/constants/default-dsl'
@@ -12,9 +13,12 @@ export function FableEditor() {
   const [draft, setDraft] = useState(DEFAULT_DSL)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [playerKey, setPlayerKey] = useState(0)
+  const [showPageTraveller, setShowPageTraveller] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Refs
   const previewContainerRef = useRef<HTMLDivElement>(null)
+  const fablePlayerRef = useRef<any>(null)
 
   // Custom hooks
   const { ast, error } = useDSLParser(dsl)
@@ -30,10 +34,31 @@ export function FableEditor() {
 
   const handleRestart = useCallback(() => {
     setPlayerKey((prev) => prev + 1)
+    setCurrentPage(1) // Reset to first page on restart
   }, [])
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((prev) => !prev)
+  }, [])
+
+  const togglePageTraveller = useCallback(() => {
+    setShowPageTraveller((prev) => !prev)
+  }, [])
+
+  const handlePageSelect = useCallback((pageId: number) => {
+    // Use the runtime store to navigate to the specific page
+    // This would need to be implemented in the runtime package
+    // For now, we'll restart and track the target page
+    setCurrentPage(pageId)
+    setPlayerKey((prev) => prev + 1)
+  }, [])
+
+  const handlePlayerStateChange = useCallback((state: {
+    currentPage: number
+    variables: Record<string, any>
+    pageHistory: number[]
+  }) => {
+    setCurrentPage(state.currentPage)
   }, [])
 
   const handleEditorChange = useCallback((value: string) => {
@@ -64,9 +89,11 @@ export function FableEditor() {
         hasError={!!error}
         hasAst={!!ast}
         isFullscreen={isFullscreen}
+        showPageTraveller={showPageTraveller}
         onSave={handleSave}
         onRestart={handleRestart}
         onToggleFullscreen={toggleFullscreen}
+        onTogglePageTraveller={togglePageTraveller}
       />
 
       {/* Main content area */}
@@ -76,6 +103,15 @@ export function FableEditor() {
           relative
         "
       >
+        {/* Page Traveller - Hidden in fullscreen */}
+        {!isFullscreen && showPageTraveller && ast && (
+          <PageTraveller
+            pages={ast.pages}
+            currentPage={currentPage}
+            onPageSelect={handlePageSelect}
+          />
+        )}
+
         {/* Editor Panel - Hidden in fullscreen */}
         {!isFullscreen && (
           <EditorPanel
@@ -94,6 +130,7 @@ export function FableEditor() {
           previewSize={previewSize}
           isFullscreen={isFullscreen}
           hasError={!!error}
+          onStateChange={handlePlayerStateChange}
         />
       </main>
     </div>
