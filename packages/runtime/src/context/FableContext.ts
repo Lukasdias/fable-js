@@ -16,9 +16,9 @@ export interface FableContextValue {
   /** Design height - the coordinate system used in DSL */
   designHeight: number;
   /** Register an agent's Konva node ref for animations/tweening */
-  registerAgent: (id: number, ref: Konva.Node | null) => void;
+  registerAgent: (id: string, ref: Konva.Node | null) => void;
   /** Get an agent's Konva node ref by ID */
-  getAgentRef: (id: number) => Konva.Node | null;
+  getAgentRef: (id: string) => Konva.Node | null;
 }
 
 export const FableRuntimeContext = createContext<FableContextValue>({

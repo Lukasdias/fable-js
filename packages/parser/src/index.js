@@ -5,7 +5,7 @@
  * Converts FableDSL code into an AST for rendering in React/Canvas.
  */
 
-import { createSemantics, resetAgentIdCounter } from './semantics/toAST.js';
+import { createSemantics } from './semantics/toAST.js';
 import grammar from './grammar/fable.ohm-bundle.js';
 
 /**
@@ -30,9 +30,6 @@ import grammar from './grammar/fable.ohm-bundle.js';
  * ```
  */
 export function parseDSL(source) {
-  // Reset agent ID counter for each parse
-  resetAgentIdCounter();
-  
   const matchResult = grammar.match(source);
   
   if (matchResult.failed()) {

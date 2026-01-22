@@ -72,23 +72,23 @@ export interface AnimationOptions {
  */
 export class AnimationEngine {
   /** Map of agent ID to their active Konva.Animation instances */
-  private animations: Map<number, Konva.Animation> = new Map();
+  private animations: Map<string, Konva.Animation> = new Map();
   
   /** Map of agent ID to their active Konva.Tween instances */
-  private tweens: Map<number, Konva.Tween> = new Map();
+  private tweens: Map<string, Konva.Tween> = new Map();
   
   /** Callback to get agent ref by ID */
-  private getAgentRef: (id: number) => Konva.Node | null;
+  private getAgentRef: (id: string) => Konva.Node | null;
 
-  constructor(getAgentRef: (id: number) => Konva.Node | null) {
+  constructor(getAgentRef: (id: string) => Konva.Node | null) {
     this.getAgentRef = getAgentRef;
   }
 
   /**
    * Move an agent to a new position with tweening.
-   * DSL: `move agent 1 to [400, 100] duration 500ms easing "ease-out"`
+   * DSL: `move #score to [400, 100] duration 500ms easing "ease-out"`
    */
-  moveAgent(agentId: number, options: MoveOptions): boolean {
+  moveAgent(agentId: string, options: MoveOptions): boolean {
     const node = this.getAgentRef(agentId);
     if (!node) {
       console.warn(`AnimationEngine: Agent ${agentId} not found`);
@@ -122,7 +122,7 @@ export class AnimationEngine {
   /**
    * Stop an active tween for an agent.
    */
-  stopTween(agentId: number): void {
+  stopTween(agentId: string): void {
     const tween = this.tweens.get(agentId);
     if (tween) {
       tween.destroy();
@@ -132,9 +132,9 @@ export class AnimationEngine {
 
   /**
    * Start a predefined animation on an agent.
-   * DSL: `text "Bounce!" at [100, 100] animate "bounce" duration 1s repeat 3`
+   * DSL: `text #title "Bounce!" at [100, 100] animate "bounce" duration 1s repeat 3`
    */
-  startAnimation(agentId: number, options: AnimationOptions): boolean {
+  startAnimation(agentId: string, options: AnimationOptions): boolean {
     const node = this.getAgentRef(agentId);
     if (!node) {
       console.warn(`AnimationEngine: Agent ${agentId} not found`);
@@ -269,9 +269,9 @@ export class AnimationEngine {
 
   /**
    * Stop an active animation for an agent and restore original state.
-   * DSL: `stop_animation agent 1`
+   * DSL: `stop_animation #score`
    */
-  stopAnimation(agentId: number): void {
+  stopAnimation(agentId: string): void {
     const animation = this.animations.get(agentId);
     if (animation) {
       animation.stop();
@@ -293,14 +293,14 @@ export class AnimationEngine {
   /**
    * Check if an agent has an active animation.
    */
-  hasAnimation(agentId: number): boolean {
+  hasAnimation(agentId: string): boolean {
     return this.animations.has(agentId);
   }
 
   /**
    * Check if an agent has an active tween.
    */
-  hasTween(agentId: number): boolean {
+  hasTween(agentId: string): boolean {
     return this.tweens.has(agentId);
   }
 }

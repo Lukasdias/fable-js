@@ -39,7 +39,7 @@ export interface StopSoundAction {
 
 export interface MoveAction {
   type: 'move';
-  agentId: number;
+  agentId: string;
   to: Position;
   duration: number;
   easing?: string;
@@ -47,7 +47,7 @@ export interface MoveAction {
 
 export interface StopAnimationAction {
   type: 'stop_animation';
-  agentId: number;
+  agentId: string;
 }
 
 export type Action = GoToPageAction | PlaySoundAction | StopMusicAction | StopSoundAction | MoveAction | StopAnimationAction;
@@ -139,7 +139,7 @@ export interface AnimateOption {
 // =========== Agents ===========
 
 export interface BaseAgent {
-  id: number;
+  id: string;
   position: Position;
 }
 

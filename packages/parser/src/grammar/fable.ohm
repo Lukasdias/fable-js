@@ -24,10 +24,14 @@ FableDSL {
         | ForBlock
         | WaitBlock
 
-   TextAgent   = "text" InterpolatedString "at" Position AnimateOption?
-   ButtonAgent = "button" StringLiteral "at" Position AnimateOption? "do" Event* "end"
-   ImageAgent  = "image" StringLiteral "at" Position AnimateOption?
-  VideoAgent  = "video" StringLiteral "at" Position
+  // Agent name is optional: #my-agent-name
+  AgentName = "#" agentIdentifier
+  agentIdentifier = (letter | digit | "_" | "-")+
+
+   TextAgent   = "text" AgentName? InterpolatedString "at" Position AnimateOption?
+   ButtonAgent = "button" AgentName? StringLiteral "at" Position AnimateOption? "do" Event* "end"
+   ImageAgent  = "image" AgentName? StringLiteral "at" Position AnimateOption?
+  VideoAgent  = "video" AgentName? StringLiteral "at" Position
 
   // =========== Events ===========
   Event = EventType "do" Action+ "end"
@@ -61,7 +65,7 @@ FableDSL {
    AnimateOption = "animate" StringLiteral AnimateParams?
    AnimateParams = AnimateParam+
    AnimateParam = "duration" Duration | "repeat" NumberLiteral
-  AgentRef = "agent" NumberLiteral
+  AgentRef = "#" agentIdentifier
   EasingOption = "easing" StringLiteral
 
   // =========== Control Structures ===========

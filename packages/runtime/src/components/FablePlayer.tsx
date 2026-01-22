@@ -52,7 +52,7 @@ export function FablePlayer({
   const prevPageIdRef = useRef<number | null>(null);
   
   // Store refs to all agents for tweening/animations
-  const agentRefs = useRef<Map<number, Konva.Node | null>>(new Map());
+  const agentRefs = useRef<Map<string, Konva.Node | null>>(new Map());
 
   // Calculate scale based on container size and design size
   const { scale, actualWidth, actualHeight, offsetX, offsetY } = useMemo(() => {
@@ -84,11 +84,11 @@ export function FablePlayer({
   }, [width, height, designWidth, designHeight, scaleMode]);
 
   // Agent ref management
-  const registerAgent = useCallback((id: number, ref: Konva.Node | null) => {
+  const registerAgent = useCallback((id: string, ref: Konva.Node | null) => {
     agentRefs.current.set(id, ref);
   }, []);
 
-  const getAgentRef = useCallback((id: number): Konva.Node | null => {
+  const getAgentRef = useCallback((id: string): Konva.Node | null => {
     return agentRefs.current.get(id) ?? null;
   }, []);
 

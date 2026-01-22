@@ -2,7 +2,21 @@
  * Semantic actions for transforming Ohm CST to FableJS AST
  */
 
-let agentIdCounter = 0;
+/**
+ * Generate a simple unique ID for agents without explicit #id
+ * Uses crypto.randomUUID if available, falls back to a simple implementation
+ */
+function generateAgentId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for environments without crypto.randomUUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 /**
  * Creates semantics for the FableDSL grammar
@@ -10,9 +24,6 @@ let agentIdCounter = 0;
  * @returns {import('ohm-js').Semantics} Semantics object with toAST operation
  */
 export function createSemantics(grammar) {
-  // Reset counter for each parse
-  agentIdCounter = 0;
-  
   return grammar.createSemantics().addOperation('toAST', {
     Fable(_fable, title, _do, contents, _end) {
       // Separate pages from statements
@@ -113,11 +124,24 @@ export function createSemantics(grammar) {
     Agent(agent) {
       return agent.toAST();
     },
+
+    AgentName(_hash, name) {
+      return name.sourceString;
+    },
+
+    agentIdentifier(chars) {
+      return chars.sourceString;
+    },
     
-    TextAgent(_text, content, _at, position, animate) {
+    TextAgent(_text, agentName, content, _at, position, animate) {
+      // If #id is provided, use it; otherwise generate UUID
+      const id = agentName.children.length > 0 
+        ? agentName.children[0].toAST() 
+        : generateAgentId();
+
       const result = {
         type: 'text',
-        id: ++agentIdCounter,
+        id,
         content: content.toAST(),
         position: position.toAST()
       };
@@ -129,10 +153,15 @@ export function createSemantics(grammar) {
       return result;
     },
     
-     ButtonAgent(_button, label, _at, position, animate, _do, events, _end) {
+     ButtonAgent(_button, agentName, label, _at, position, animate, _do, events, _end) {
+       // If #id is provided, use it; otherwise generate UUID
+       const id = agentName.children.length > 0 
+         ? agentName.children[0].toAST() 
+         : generateAgentId();
+
        const result = {
          type: 'button',
-         id: ++agentIdCounter,
+         id,
          label: label.toAST().value, // Extract string from typed value
          position: position.toAST()
        };
@@ -146,10 +175,15 @@ export function createSemantics(grammar) {
        return result;
      },
     
-    ImageAgent(_image, src, _at, position, animate) {
+    ImageAgent(_image, agentName, src, _at, position, animate) {
+      // If #id is provided, use it; otherwise generate UUID
+      const id = agentName.children.length > 0 
+        ? agentName.children[0].toAST() 
+        : generateAgentId();
+
       const result = {
         type: 'image',
-        id: ++agentIdCounter,
+        id,
         src: src.toAST().value, // Extract string from typed value
         position: position.toAST()
       };
@@ -161,13 +195,20 @@ export function createSemantics(grammar) {
       return result;
     },
     
-    VideoAgent(_video, src, _at, position) {
-      return {
+    VideoAgent(_video, agentName, src, _at, position) {
+      // If #id is provided, use it; otherwise generate UUID
+      const id = agentName.children.length > 0 
+        ? agentName.children[0].toAST() 
+        : generateAgentId();
+
+      const result = {
         type: 'video',
-        id: ++agentIdCounter,
+        id,
         src: src.toAST().value, // Extract string from typed value
         position: position.toAST()
       };
+
+      return result;
     },
     
     Event(eventType, _do, actions, _end) {
@@ -223,7 +264,7 @@ export function createSemantics(grammar) {
     MoveAction(_move, agentRef, _to, position, _duration, duration, easing) {
       const result = {
         type: 'move',
-        agentId: agentRef.toAST(), // AgentRef returns number
+        agentId: agentRef.toAST(), // AgentRef returns string ID
         to: position.toAST(), // Position returns [number, number]
         duration: duration.toAST() // Duration returns number
       };
@@ -238,7 +279,7 @@ export function createSemantics(grammar) {
     StopAnimationAction(_stopAnimation, agentRef) {
       return {
         type: 'stop_animation',
-        agentId: agentRef.toAST() // AgentRef returns number
+        agentId: agentRef.toAST() // AgentRef returns string ID
       };
     },
 
@@ -353,8 +394,9 @@ export function createSemantics(grammar) {
       throw new Error(`Unknown animate param: ${keyword}`);
     },
 
-    AgentRef(_agent, id) {
-      return id.toAST().value; // Extract number from typed value
+    // AgentRef - returns the agent ID string directly
+    AgentRef(_hash, id) {
+      return id.sourceString;
     },
 
     EasingOption(_easing, value) {
@@ -643,11 +685,4 @@ export function createSemantics(grammar) {
       return this.sourceString;
     }
   });
-}
-
-/**
- * Resets the agent ID counter (useful for testing)
- */
-export function resetAgentIdCounter() {
-  agentIdCounter = 0;
 }
