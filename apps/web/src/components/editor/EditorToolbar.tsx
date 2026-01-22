@@ -1,5 +1,14 @@
 import { Button } from '@/components/ui/button'
-import { AlertCircle, Maximize2, Minimize2, Play, RotateCcw, Save } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
+import {
+  AlertCircle,
+  BookOpen,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Save,
+  Sparkles,
+} from 'lucide-react'
 import { memo } from 'react'
 
 interface EditorToolbarProps {
@@ -13,6 +22,109 @@ interface EditorToolbarProps {
   onToggleFullscreen: () => void
 }
 
+// Animated logo component
+const FableLogo = memo(function FableLogo() {
+  return (
+    <div className="flex items-center gap-3 group">
+      {/* Animated book icon with gradient */}
+      <div
+        className="
+          relative w-10 h-10 rounded-xl
+          bg-gradient-to-br from-primary via-secondary to-accent
+          flex items-center justify-center
+          shadow-lg shadow-primary/30
+          transition-all duration-300
+          group-hover:shadow-xl group-hover:shadow-primary/40
+          group-hover:scale-105
+          group-hover:-rotate-3
+        "
+      >
+        <BookOpen className="h-5 w-5 text-white" strokeWidth={2.5} />
+        {/* Sparkle decoration */}
+        <Sparkles
+          className="
+            absolute -top-1 -right-1 h-3.5 w-3.5 
+            text-amber-400
+            animate-pulse-soft
+          "
+        />
+      </div>
+      {/* Brand text */}
+      <div className="flex flex-col">
+        <span className="font-display font-bold text-lg text-foreground leading-tight">
+          Fable<span className="text-primary">.js</span>
+        </span>
+        <span className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">
+          Story Editor
+        </span>
+      </div>
+    </div>
+  )
+})
+
+// Status badge component
+const StatusBadge = memo(function StatusBadge({
+  hasUnsavedChanges,
+  hasError,
+  title,
+}: {
+  hasUnsavedChanges: boolean
+  hasError: boolean
+  title?: string
+}) {
+  if (hasError) {
+    return (
+      <div
+        className="
+          flex items-center gap-2 px-3 py-1.5 
+          bg-destructive/10 border border-destructive/20
+          rounded-full
+          animate-bounce-in
+        "
+      >
+        <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+        <span className="text-xs font-semibold text-destructive">
+          Syntax Error
+        </span>
+      </div>
+    )
+  }
+
+  if (hasUnsavedChanges) {
+    return (
+      <div
+        className="
+          flex items-center gap-2 px-3 py-1.5 
+          bg-warning/10 border border-warning/20
+          rounded-full
+          animate-fade-in
+        "
+      >
+        <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+        <span className="text-xs font-semibold text-warning">Unsaved</span>
+      </div>
+    )
+  }
+
+  if (title) {
+    return (
+      <div
+        className="
+          flex items-center gap-2 px-3 py-1.5 
+          bg-muted/50 border border-border/50
+          rounded-full
+        "
+      >
+        <span className="text-xs font-medium text-muted-foreground truncate max-w-[200px]">
+          {title}
+        </span>
+      </div>
+    )
+  }
+
+  return null
+})
+
 export const EditorToolbar = memo(function EditorToolbar({
   title,
   hasUnsavedChanges,
@@ -24,70 +136,76 @@ export const EditorToolbar = memo(function EditorToolbar({
   onToggleFullscreen,
 }: EditorToolbarProps) {
   return (
-    <div className="h-12 border-b border-zinc-800 bg-zinc-900 px-4 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
-            <Play className="h-4 w-4 text-white fill-white" />
-          </div>
-          <span className="font-semibold text-white">FableJS</span>
-        </div>
-        {title && (
-          <span className="text-xs text-zinc-500 border-l border-zinc-700 pl-3">
-            {title}
-          </span>
-        )}
-        {hasUnsavedChanges && (
-          <span className="text-xs text-amber-500 font-medium">Unsaved</span>
-        )}
+    <header
+      className="
+        h-16 px-5
+        flex items-center justify-between
+        bg-card/80 backdrop-blur-md
+        border-b border-border/50
+        shrink-0
+      "
+    >
+      {/* Left section - Logo & Status */}
+      <div className="flex items-center gap-4">
+        <FableLogo />
+
+        {/* Divider */}
+        <div className="h-8 w-px bg-border/50" />
+
+        {/* Status badge */}
+        <StatusBadge
+          hasUnsavedChanges={hasUnsavedChanges}
+          hasError={hasError}
+          title={title}
+        />
       </div>
 
+      {/* Right section - Actions */}
       <div className="flex items-center gap-2">
-        {hasError && (
-          <div className="flex items-center gap-1.5 text-red-400 text-xs bg-red-500/10 px-2 py-1 rounded">
-            <AlertCircle className="h-3.5 w-3.5" />
-            <span>Syntax Error</span>
-          </div>
-        )}
-
+        {/* Save button */}
         <Button
           onClick={onSave}
           size="sm"
-          variant="ghost"
+          variant={hasUnsavedChanges ? 'default' : 'ghost'}
           disabled={!hasUnsavedChanges}
-          className="text-zinc-400 hover:text-white h-8"
+          className="gap-2"
         >
-          <Save className="h-4 w-4 mr-1.5" />
-          Save
+          <Save className="h-4 w-4" />
+          <span className="hidden sm:inline">Save</span>
         </Button>
 
-        <div className="w-px h-5 bg-zinc-700" />
-
+        {/* Restart button */}
         <Button
           onClick={onRestart}
           size="sm"
           variant="ghost"
           disabled={!hasAst}
-          className="text-zinc-400 hover:text-white h-8"
+          className="gap-2"
         >
-          <RotateCcw className="h-4 w-4 mr-1.5" />
-          Restart
+          <RotateCcw className="h-4 w-4" />
+          <span className="hidden sm:inline">Restart</span>
         </Button>
 
+        {/* Divider */}
+        <div className="h-6 w-px bg-border/50 mx-1" />
+
+        {/* Theme toggle */}
+        <ThemeToggle />
+
+        {/* Fullscreen toggle */}
         <Button
           onClick={onToggleFullscreen}
-          size="sm"
-          variant="ghost"
-          className="text-zinc-400 hover:text-white h-8"
+          size="icon-sm"
+          variant="soft"
+          className="rounded-lg"
         >
           {isFullscreen ? (
-            <Minimize2 className="h-4 w-4 mr-1.5" />
+            <Minimize2 className="h-4 w-4" />
           ) : (
-            <Maximize2 className="h-4 w-4 mr-1.5" />
+            <Maximize2 className="h-4 w-4" />
           )}
-          {isFullscreen ? 'Exit' : 'Fullscreen'}
         </Button>
       </div>
-    </div>
+    </header>
   )
 })

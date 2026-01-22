@@ -41,7 +41,23 @@ export function FableEditor() {
   }, [])
 
   return (
-    <div className="h-screen flex flex-col bg-zinc-950">
+    <div
+      className="
+        h-screen flex flex-col
+        bg-background
+        text-foreground
+        overflow-hidden
+      "
+    >
+      {/* Subtle gradient background overlay */}
+      <div
+        className="
+          fixed inset-0 pointer-events-none
+          bg-gradient-to-br from-primary/[0.02] via-transparent to-secondary/[0.02]
+        "
+      />
+
+      {/* Toolbar */}
       <EditorToolbar
         title={ast?.title}
         hasUnsavedChanges={hasUnsavedChanges}
@@ -53,7 +69,14 @@ export function FableEditor() {
         onToggleFullscreen={toggleFullscreen}
       />
 
-      <div className="flex-1 flex min-h-0">
+      {/* Main content area */}
+      <main
+        className="
+          flex-1 flex min-h-0
+          relative
+        "
+      >
+        {/* Editor Panel - Hidden in fullscreen */}
         {!isFullscreen && (
           <EditorPanel
             value={draft}
@@ -63,6 +86,7 @@ export function FableEditor() {
           />
         )}
 
+        {/* Preview Panel */}
         <PreviewPanel
           ref={previewContainerRef}
           ast={ast}
@@ -71,7 +95,7 @@ export function FableEditor() {
           isFullscreen={isFullscreen}
           hasError={!!error}
         />
-      </div>
+      </main>
     </div>
   )
 }

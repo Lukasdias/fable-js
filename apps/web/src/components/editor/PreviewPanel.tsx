@@ -1,6 +1,6 @@
 import type { Fable } from '@fable-js/parser'
 import { FablePlayer } from '@fable-js/runtime'
-import { Play } from 'lucide-react'
+import { BookOpen, Pen, Play, Sparkles } from 'lucide-react'
 import { forwardRef, memo } from 'react'
 
 interface PreviewPanelProps {
@@ -11,19 +11,7 @@ interface PreviewPanelProps {
   hasError: boolean
 }
 
-// Hoisted static styles (vercel best practice: rendering-hoist-jsx)
-const CHECKERBOARD_STYLE = {
-  backgroundImage: `
-    linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
-    linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
-    linear-gradient(-45deg, transparent 75%, #1a1a1a 75%)
-  `,
-  backgroundSize: '20px 20px',
-  backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-  backgroundColor: '#0f0f0f',
-} as const
-
+// Header component
 const PreviewHeader = memo(function PreviewHeader({
   pageCount,
   previewSize,
@@ -32,38 +20,172 @@ const PreviewHeader = memo(function PreviewHeader({
   previewSize: { width: number; height: number }
 }) {
   return (
-    <div className="h-10 border-b border-zinc-800 px-4 flex items-center justify-between shrink-0">
+    <div
+      className="
+        h-12 px-4
+        flex items-center justify-between
+        bg-surface/50 backdrop-blur-sm
+        border-b border-border/30
+        shrink-0
+      "
+    >
       <div className="flex items-center gap-3">
-        <span className="text-xs font-medium text-zinc-400">Preview</span>
-        {pageCount > 0 && (
-          <span className="text-xs text-zinc-600">
-            Page 1 of {pageCount}
+        {/* Icon with gradient background */}
+        <div
+          className="
+            w-8 h-8 rounded-lg
+            bg-gradient-to-br from-accent/20 to-accent/5
+            border border-accent/20
+            flex items-center justify-center
+          "
+        >
+          <Play className="h-4 w-4 text-accent fill-accent" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold text-foreground">
+            Story Preview
           </span>
-        )}
+          {pageCount > 0 && (
+            <span className="text-[10px] text-muted-foreground">
+              {pageCount} {pageCount === 1 ? 'page' : 'pages'}
+            </span>
+          )}
+        </div>
       </div>
-      <div className="text-xs text-zinc-600">
-        {previewSize.width} x {previewSize.height}
+
+      {/* Size indicator */}
+      <div
+        className="
+          flex items-center gap-1.5 px-2.5 py-1
+          bg-muted/50 rounded-full
+          text-xs text-muted-foreground font-mono
+        "
+      >
+        {previewSize.width} × {previewSize.height}
       </div>
     </div>
   )
 })
 
+// Beautiful empty state component
 const EmptyPreview = memo(function EmptyPreview({
   hasError,
 }: {
   hasError: boolean
 }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center">
-      <div className="w-24 h-24 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
-        <Play className="h-10 w-10 text-zinc-700" />
+    <div
+      className="
+        flex flex-col items-center justify-center 
+        text-center p-8
+        animate-fade-in
+      "
+    >
+      {/* Illustrated empty state */}
+      <div className="relative mb-6">
+        {/* Main book illustration */}
+        <div
+          className="
+            w-28 h-28 rounded-3xl
+            bg-gradient-to-br from-muted/80 to-muted/40
+            border-2 border-dashed border-border
+            flex items-center justify-center
+            animate-float
+          "
+        >
+          <BookOpen
+            className="h-12 w-12 text-muted-foreground/50"
+            strokeWidth={1.5}
+          />
+        </div>
+
+        {/* Floating decorations */}
+        <div
+          className="
+            absolute -top-2 -right-2
+            w-10 h-10 rounded-xl
+            bg-gradient-to-br from-primary/20 to-primary/10
+            border border-primary/20
+            flex items-center justify-center
+            animate-bounce-in
+          "
+          style={{ animationDelay: '200ms' }}
+        >
+          <Pen className="h-4 w-4 text-primary" />
+        </div>
+
+        <div
+          className="
+            absolute -bottom-1 -left-3
+            w-8 h-8 rounded-lg
+            bg-gradient-to-br from-secondary/20 to-secondary/10
+            border border-secondary/20
+            flex items-center justify-center
+            animate-bounce-in
+          "
+          style={{ animationDelay: '400ms' }}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-secondary" />
+        </div>
       </div>
-      <p className="text-zinc-500 text-sm mb-1">No preview available</p>
-      <p className="text-zinc-600 text-xs">
+
+      {/* Text content */}
+      <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+        {hasError ? 'Oops! Something went wrong' : 'Your story awaits'}
+      </h3>
+
+      <p className="text-sm text-muted-foreground max-w-[280px] leading-relaxed">
         {hasError
-          ? 'Fix syntax errors to see preview'
-          : 'Write valid FableDSL code to preview'}
+          ? 'Fix the syntax errors in your script to see your story come to life.'
+          : 'Write valid FableDSL code in the editor and watch your interactive story unfold here.'}
       </p>
+
+      {/* Hint */}
+      {!hasError && (
+        <div
+          className="
+            mt-6 px-4 py-2
+            bg-muted/50 rounded-xl
+            border border-border/50
+          "
+        >
+          <p className="text-xs text-muted-foreground">
+            <kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-mono">
+              Ctrl
+            </kbd>
+            {' + '}
+            <kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-mono">
+              S
+            </kbd>
+            {' to save and preview'}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+})
+
+// Preview frame - clean container that lets canvas content shine
+const PreviewFrame = memo(function PreviewFrame({
+  children,
+  width,
+  height,
+}: {
+  children: React.ReactNode
+  width: number
+  height: number
+}) {
+  return (
+    <div
+      className="
+        relative rounded-2xl overflow-hidden
+        shadow-2xl shadow-black/20
+        ring-1 ring-border/50
+      "
+      style={{ width, height }}
+    >
+      {/* Content - canvas provides its own background */}
+      <div className="relative">{children}</div>
     </div>
   )
 })
@@ -78,32 +200,34 @@ export const PreviewPanel = memo(
     return (
       <div
         ref={ref}
-        className={`${isFullscreen ? 'w-full' : 'w-[60%]'} flex flex-col bg-zinc-950`}
+        className={`
+          ${isFullscreen ? 'w-full' : 'flex-1'} 
+          flex flex-col
+          bg-background
+          overflow-hidden
+        `}
       >
+        {/* Header */}
         <PreviewHeader pageCount={pageCount} previewSize={previewSize} />
 
-        <div className="flex-1 flex items-center justify-center p-6 bg-zinc-950 min-h-0">
+        {/* Preview Area - neutral background for canvas */}
+        <div
+          className="
+            flex-1 min-h-0
+            flex items-center justify-center
+            p-6 lg:p-8
+            bg-muted/30
+          "
+        >
           {ast ? (
-            <div
-              className="relative rounded-lg overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10"
-              style={{
-                width: previewSize.width,
-                height: previewSize.height,
-              }}
-            >
-              {/* Checkerboard pattern for transparency */}
-              <div className="absolute inset-0" style={CHECKERBOARD_STYLE} />
-
-              {/* Fable Player */}
-              <div className="relative z-10">
-                <FablePlayer
-                  key={`preview-${playerKey}`}
-                  ast={ast}
-                  width={previewSize.width}
-                  height={previewSize.height}
-                />
-              </div>
-            </div>
+            <PreviewFrame width={previewSize.width} height={previewSize.height}>
+              <FablePlayer
+                key={`preview-${playerKey}`}
+                ast={ast}
+                width={previewSize.width}
+                height={previewSize.height}
+              />
+            </PreviewFrame>
           ) : (
             <EmptyPreview hasError={hasError} />
           )}

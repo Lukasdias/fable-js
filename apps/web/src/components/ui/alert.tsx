@@ -1,36 +1,105 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+'use client'
 
-import { cn } from "@/lib/utils"
+import * as React from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from '@/lib/utils'
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  // Base styles - rounded, friendly, with nice spacing
+  `relative w-full rounded-2xl p-4 
+   border
+   flex gap-4 items-start
+   animate-slide-up`,
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
-        destructive:
-          "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+        // Default - neutral info
+        default: `
+          bg-muted/50 
+          border-border
+          text-foreground
+          [&>svg]:text-muted-foreground
+        `,
+        // Info - soft blue
+        info: `
+          bg-info/10
+          border-info/20
+          text-info
+          [&>svg]:text-info
+        `,
+        // Success - friendly green
+        success: `
+          bg-success/10
+          border-success/20
+          text-success
+          [&>svg]:text-success
+        `,
+        // Warning - warm amber
+        warning: `
+          bg-warning/10
+          border-warning/20
+          text-warning
+          [&>svg]:text-warning
+        `,
+        // Destructive - soft red
+        destructive: `
+          bg-destructive/10
+          border-destructive/20
+          text-destructive
+          [&>svg]:text-destructive
+        `,
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: 'default',
     },
   }
 )
 
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
-  <div
-    ref={ref}
-    role="alert"
-    className={cn(alertVariants({ variant }), className)}
-    {...props}
-  />
-))
-Alert.displayName = "Alert"
+// Icon container styles
+const iconContainerVariants = cva(
+  'shrink-0 rounded-xl p-2',
+  {
+    variants: {
+      variant: {
+        default: 'bg-muted',
+        info: 'bg-info/15',
+        success: 'bg-success/15',
+        warning: 'bg-warning/15',
+        destructive: 'bg-destructive/15',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+)
+
+export interface AlertProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof alertVariants> {
+  /** Optional icon to display */
+  icon?: React.ReactNode
+}
+
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+  ({ className, variant, icon, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      role="alert"
+      className={cn(alertVariants({ variant }), className)}
+      {...props}
+    >
+      {icon && (
+        <div className={cn(iconContainerVariants({ variant }))}>
+          {icon}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  )
+)
+Alert.displayName = 'Alert'
 
 const AlertTitle = React.forwardRef<
   HTMLParagraphElement,
@@ -38,11 +107,15 @@ const AlertTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h5
     ref={ref}
-    className={cn("mb-1 font-medium leading-none tracking-tight", className)}
+    className={cn(
+      'font-semibold leading-tight tracking-tight mb-1',
+      'font-display',
+      className
+    )}
     {...props}
   />
 ))
-AlertTitle.displayName = "AlertTitle"
+AlertTitle.displayName = 'AlertTitle'
 
 const AlertDescription = React.forwardRef<
   HTMLParagraphElement,
@@ -50,10 +123,14 @@ const AlertDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm [&_p]:leading-relaxed", className)}
+    className={cn(
+      'text-sm opacity-90 leading-relaxed',
+      '[&_p]:leading-relaxed',
+      className
+    )}
     {...props}
   />
 ))
-AlertDescription.displayName = "AlertDescription"
+AlertDescription.displayName = 'AlertDescription'
 
 export { Alert, AlertTitle, AlertDescription }
