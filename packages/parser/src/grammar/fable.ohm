@@ -9,7 +9,7 @@ FableDSL {
   PageContent = Agent | Statement | MusicStatement | TimerBlock
 
   // =========== Statements ===========
-  Statement = InitStatement | SetStatement | AddStatement | SubtractStatement
+  Statement = InitStatement | SetStatement | AddStatement | SubtractStatement | Action
   InitStatement = "init" identifier "to" Expression
   SetStatement = "set" identifier "to" Expression
   AddStatement = "add" Expression "to" identifier
@@ -34,7 +34,7 @@ FableDSL {
   VideoAgent  = "video" AgentName? StringLiteral "at" Position
 
   // =========== Events ===========
-  Event = EventType "do" Action+ "end"
+  Event = EventType "do" Statement+ "end"
   EventType = "on_click" | "on_hover" | "on_drag" | "on_drop"
   // =========== Audio ===========
   MusicStatement = "music" StringLiteral MusicOptions?
@@ -69,11 +69,11 @@ FableDSL {
   EasingOption = "easing" StringLiteral
 
   // =========== Control Structures ===========
-  IfBlock  = "if" StringLiteral "do" Agent* "end"
+  IfBlock  = "if" Expression "do" Agent* "end"
   ForBlock = "for" identifier "in" Range "do" Agent* "end"
 
   // =========== Primitives ===========
-  Position = "[" NumberLiteral "," NumberLiteral "]"
+  Position = "[" Expression "," Expression "]"
   Range = NumberLiteral ".." NumberLiteral
 
   // =========== Expressions ===========

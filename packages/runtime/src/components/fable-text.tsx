@@ -19,8 +19,8 @@ export const FableText = memo(function FableText({
   return (
     <Text
       ref={textRef}
-      x={agent.position?.[0] ?? 0}
-      y={agent.position?.[1] ?? 0}
+      x={(agent.position as [number, number])?.[0] ?? 0}
+      y={(agent.position as [number, number])?.[1] ?? 0}
       text={content}
       fontSize={16}
       fontFamily="Arial, sans-serif"

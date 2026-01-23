@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useRef, useMemo, memo } from 'react'
 import { Stage, Layer } from 'react-konva'
-import type { Fable, Agent, Event, TextAgent, ButtonAgent, ImageAgent } from '@fable-js/parser'
+import type { Fable, Agent, Event, TextAgent, ButtonAgent, ImageAgent, IfBlock, ForBlock } from '@fable-js/parser'
 import { useRuntimeStore } from '../store/runtime-store.js'
 import { FableRuntimeContext, type FableContextValue } from '../context/fable-context.js'
 import { AnimationEngine } from '../engine/animation-engine.js'
@@ -62,19 +62,104 @@ const EmptyState = memo(function EmptyState({
 const AgentRenderer = memo(function AgentRenderer({
   agent,
   variables,
+  evaluator,
+  positions,
   onEvent,
 }: {
   agent: Agent
   variables: Map<string, unknown>
+  evaluator: any // ExpressionEvaluator
+  positions: Map<string, [number, number]>
   onEvent: (event: string, agent: Agent) => void
 }) {
+  // Use persisted position if available, otherwise evaluate agent position
+  const hasId = 'id' in agent
+  let position: [number, number]
+  if (hasId && positions.has(agent.id!)) {
+    position = positions.get(agent.id!)!
+  } else {
+    const pos = (agent as any).position || [0, 0]
+    if (Array.isArray(pos) && pos.length === 2) {
+      if (typeof pos[0] === 'object' && typeof pos[1] === 'object') {
+        // Expressions, evaluate
+        position = [
+          evaluator?.evaluate(pos[0]) ?? 0,
+          evaluator?.evaluate(pos[1]) ?? 0
+        ] as [number, number]
+      } else {
+        position = pos as [number, number]
+      }
+    } else {
+      position = [0, 0]
+    }
+  }
+  const agentWithPosition = { ...agent, position }
+
   switch (agent.type) {
     case 'text':
-      return <FableText agent={agent as TextAgent} variables={variables} />
+      return <FableText agent={agentWithPosition as TextAgent} variables={variables} />
     case 'button':
-      return <FableButton agent={agent as ButtonAgent} variables={variables} onEvent={onEvent} />
+      return <FableButton agent={agentWithPosition as ButtonAgent} variables={variables} onEvent={onEvent} />
     case 'image':
-      return <FableImage agent={agent as ImageAgent} onEvent={onEvent} />
+      return <FableImage agent={agentWithPosition as ImageAgent} onEvent={onEvent} />
+    case 'if': {
+      const ifAgent = agent as IfBlock
+      const conditionResult = evaluator?.evaluate(ifAgent.condition)
+      if (conditionResult) {
+        return (
+          <>
+            {ifAgent.agents.map((subAgent, index) => (
+              <AgentRenderer
+                key={`if-${index}`}
+                agent={subAgent}
+                variables={variables}
+                evaluator={evaluator}
+                positions={positions}
+                onEvent={onEvent}
+              />
+            ))}
+          </>
+        )
+      }
+      return null
+    }
+    case 'for': {
+      const forAgent = agent as ForBlock
+      const range = evaluator?.evaluate(forAgent.range)
+      if (Array.isArray(range)) {
+        return (
+          <>
+            {range.map((value, index) => {
+              // Temporarily set the variable for this iteration
+              const originalValue = variables.get(forAgent.variable)
+              variables.set(forAgent.variable, value)
+              const result = (
+                <React.Fragment key={`for-${index}`}>
+                  {forAgent.agents.map((subAgent, subIndex) => (
+                    <AgentRenderer
+                      key={`for-${index}-${subIndex}`}
+                      agent={subAgent}
+                      variables={variables}
+                      evaluator={evaluator}
+                      positions={positions}
+                      onEvent={onEvent}
+                    />
+                  ))}
+                </React.Fragment>
+              )
+              // Restore original value
+              if (originalValue !== undefined) {
+                variables.set(forAgent.variable, originalValue)
+              } else {
+                variables.delete(forAgent.variable)
+              }
+              return result
+            })}
+          </>
+        )
+      }
+      return null
+    }
     default:
       console.warn('Unknown agent type:', agent.type)
       return null
@@ -100,6 +185,9 @@ export const FablePlayer = memo(function FablePlayer({
     variables,
     currentPage: currentPageId,
     setAnimationEngine,
+    evaluator,
+    positions,
+    animationEngine,
   } = useRuntimeStore()
 
   const prevPageIdRef = useRef<number | null>(null)
@@ -130,11 +218,26 @@ export const FablePlayer = memo(function FablePlayer({
     const engine = new AnimationEngine(getAgentRef)
     setAnimationEngine(engine)
 
+    // Start animations for current page agents
+    if (storeCurrentPage) {
+      storeCurrentPage.agents?.forEach(agent => {
+        if ('animate' in agent && agent.animate && 'id' in agent && agent.id) {
+          engine.startAnimation(agent.id, {
+            type: agent.animate.animation as any,
+            duration: agent.animate.duration,
+            repeat: agent.animate.repeat,
+          })
+        }
+      })
+    }
+
     return () => {
       engine.stopAll()
       setAnimationEngine(null)
     }
-  }, [getAgentRef, setAnimationEngine])
+  }, [getAgentRef, setAnimationEngine, currentPageId])
+
+  const storeCurrentPage = getCurrentPage()
 
   // Update store when AST changes
   useEffect(() => {
@@ -144,23 +247,35 @@ export const FablePlayer = memo(function FablePlayer({
       clearAgentRefs()
     }
   }, [ast, setAst, clearAgentRefs])
-
-  const storeCurrentPage = getCurrentPage()
   const currentPage = storeCurrentPage ?? ast?.pages?.[0]
 
-  // Execute page statements on navigation
+  // Execute page statements and start animations on navigation
   useEffect(() => {
     if (prevPageIdRef.current === null) {
       prevPageIdRef.current = currentPageId
       return
     }
 
-    if (currentPageId !== prevPageIdRef.current && currentPage?.statements) {
-      executeStatements(currentPage.statements)
+    if (currentPageId !== prevPageIdRef.current) {
+      if (currentPage?.statements) {
+        executeStatements(currentPage.statements)
+      }
+      // Start animations for the new page
+      if (animationEngine && currentPage?.agents) {
+        currentPage.agents.forEach(agent => {
+          if ('animate' in agent && agent.animate && 'id' in agent && agent.id) {
+            animationEngine.startAnimation(agent.id, {
+              type: agent.animate.animation as any,
+              duration: agent.animate.duration,
+              repeat: agent.animate.repeat,
+            })
+          }
+        })
+      }
     }
 
     prevPageIdRef.current = currentPageId
-  }, [currentPageId, currentPage, executeStatements])
+  }, [currentPageId, currentPage, executeStatements, animationEngine])
 
   // Notify parent of state changes
   useEffect(() => {
@@ -176,7 +291,7 @@ export const FablePlayer = memo(function FablePlayer({
       const eventHandler = (agent as { events?: Event[] }).events?.find(
         (e: Event) => e.type === event
       )
-      if (eventHandler && 'statements' in eventHandler && Array.isArray(eventHandler.statements)) {
+      if (eventHandler?.statements) {
         executeStatements(eventHandler.statements)
       }
     },
@@ -210,6 +325,8 @@ export const FablePlayer = memo(function FablePlayer({
                 key={'id' in agent ? agent.id : Math.random()}
                 agent={agent}
                 variables={variables}
+                evaluator={evaluator}
+                positions={positions}
                 onEvent={handleEvent}
               />
             ))}

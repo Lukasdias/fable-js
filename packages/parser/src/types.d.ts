@@ -6,7 +6,7 @@ import type { Grammar, Semantics } from 'ohm-js';
 
 // =========== Primitives ===========
 
-export type Position = [number, number];
+export type Position = [number, number] | [Expression, Expression];
 
 export interface Range {
   start: number;
@@ -54,7 +54,7 @@ export type Action = GoToPageAction | PlaySoundAction | StopMusicAction | StopSo
 
 export interface Event {
   type: EventType;
-  action: Action;
+  statements: Statement[];
 }
 
 // =========== Statements ===========
@@ -179,7 +179,7 @@ export interface InterpolatedString {
 
 export interface IfBlock {
   type: 'if';
-  condition: string;
+  condition: Expression;
   agents: Agent[];
 }
 

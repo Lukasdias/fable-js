@@ -631,7 +631,7 @@ export function createSemantics(grammar: Grammar): Semantics {
     IfBlock(_if, condition, _do, agents, _end) {
       return {
         type: 'if',
-        condition: condition.toAST().value, // Extract string from typed value
+        condition: condition.toAST(),
         agents: agents.children.map(a => a.toAST())
       };
     },
@@ -646,7 +646,7 @@ export function createSemantics(grammar: Grammar): Semantics {
     },
     
     Position(_lb, x, _comma, y, _rb) {
-      return [x.toAST().value, y.toAST().value]; // Extract numbers from typed values
+      return [x.toAST(), y.toAST()]; // Return expressions for runtime evaluation
     },
     
     Range(start, _dots, end) {

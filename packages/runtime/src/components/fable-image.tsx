@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, memo } from 'react'
-import { Image } from 'react-konva'
+import type { Agent, ImageAgent } from '@fable-js/parser'
 import type Konva from 'konva'
-import type { ImageAgent, Agent } from '@fable-js/parser'
+import { memo, useCallback, useEffect, useState } from 'react'
+import { Image } from 'react-konva'
 import { useAgentRegistration, useDraggable } from '../hooks/index.js'
 
 export interface FableImageProps {
@@ -46,8 +46,8 @@ export const FableImage = memo(function FableImage({
   return (
     <Image
       ref={imageRef}
-      x={agent.position?.[0] ?? 0}
-      y={agent.position?.[1] ?? 0}
+      x={(agent.position as [number, number])?.[0] ?? 0}
+      y={(agent.position as [number, number])?.[1] ?? 0}
       image={image ?? undefined}
       onClick={handleClick}
       onTap={handleClick}

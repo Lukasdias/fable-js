@@ -15,9 +15,12 @@ export interface RuntimeState {
   variables: Map<string, any>;
   dslVariables: Set<string>; // Variables defined in DSL
 
+  // Agent positions - persist positions changed by animations
+  positions: Map<string, [number, number]>;
+
   // Evaluator instance
   evaluator: ExpressionEvaluator | null;
-  
+
   // Animation engine instance
   animationEngine: AnimationEngine | null;
 
@@ -51,13 +54,9 @@ export const useTotalPages = () => useRuntimeStore((state) => state.ast?.pages.l
 export const useIsLoaded = () => useRuntimeStore((state) => state.ast !== null);
 export const useCanGoBack = () => useRuntimeStore((state) => state.pageHistory.length > 0);
 
-// Shallow-compared selectors for objects/arrays (prevents infinite re-renders)
-export const useVariables = () => useRuntimeStore(
-  useShallow((state) => Object.fromEntries(state.variables))
-);
-export const usePageHistory = () => useRuntimeStore(
-  useShallow((state) => [...state.pageHistory])
-);
+// Selectors that return stable references
+export const useVariables = () => useRuntimeStore((state) => state.variables);
+export const usePageHistory = () => useRuntimeStore((state) => state.pageHistory);
 
 // Actions hook (stable references, no re-renders on state changes)
 export const useRuntimeActions = () => useRuntimeStore(
@@ -103,8 +102,8 @@ export const useRuntimeSelectors = () => {
     goBack: actions.goBack,
     executeStatements: actions.executeStatements,
     reset: actions.reset,
-    getVariableValue: (name: string) => variables[name],
-    hasNonZeroVariable: (name: string) => variables[name] !== undefined && variables[name] !== 0,
+    getVariableValue: (name: string) => variables.get(name),
+    hasNonZeroVariable: (name: string) => variables.get(name) !== undefined && variables.get(name) !== 0,
   };
 };
 
@@ -116,6 +115,7 @@ export const useRuntimeStore = create<RuntimeState>()(
   pageHistory: [],
   variables: new Map(),
   dslVariables: new Set(),
+  positions: new Map(),
   evaluator: null,
   animationEngine: null,
 
@@ -162,8 +162,8 @@ export const useRuntimeStore = create<RuntimeState>()(
 
     // Create evaluator for executing initial statements
     const evaluator = new ExpressionEvaluator({
-      getVariable: (name: string) => newVariables.get(name) ?? 0,
-      hasVariable: (name: string) => newVariables.has(name),
+      getVariable: (name: string) => get().variables.get(name) ?? 0,
+      hasVariable: (name: string) => get().variables.has(name),
     });
 
     // Helper to execute init/set statements
@@ -193,9 +193,10 @@ export const useRuntimeStore = create<RuntimeState>()(
       pageHistory: [],
       dslVariables,
       variables: newVariables,
+      positions: new Map(), // Reset positions when loading new AST
       evaluator: new ExpressionEvaluator({
-        getVariable: (name: string) => newVariables.get(name) ?? 0,
-        hasVariable: (name: string) => newVariables.has(name),
+        getVariable: (name: string) => get().variables.get(name) ?? 0,
+        hasVariable: (name: string) => get().variables.has(name),
       }),
     });
   },
@@ -275,12 +276,19 @@ export const useRuntimeStore = create<RuntimeState>()(
         case 'move':
           // Move action with tweening
           if (animationEngine) {
+            // Evaluate position expressions
+            const toPos = [
+              typeof stmt.to[0] === 'object' ? evaluator?.evaluate(stmt.to[0]) ?? 0 : stmt.to[0],
+              typeof stmt.to[1] === 'object' ? evaluator?.evaluate(stmt.to[1]) ?? 0 : stmt.to[1]
+            ] as [number, number]
             animationEngine.moveAgent(stmt.agentId, {
-              x: stmt.to[0],
-              y: stmt.to[1],
+              x: toPos[0],
+              y: toPos[1],
               duration: stmt.duration,
               easing: stmt.easing,
             });
+            // Update persisted position
+            get().positions.set(stmt.agentId, toPos);
           } else {
             console.warn('AnimationEngine not available for move action');
           }
@@ -304,12 +312,13 @@ export const useRuntimeStore = create<RuntimeState>()(
     if (animationEngine) {
       animationEngine.stopAll();
     }
-    
+
     set((state) => ({
       currentPage: 1,
       pageHistory: [],
       variables: new Map(),
       dslVariables: new Set(),
+      positions: new Map(),
       // Keep AST and evaluator intact for reset functionality
     }));
   },
@@ -348,6 +357,7 @@ export const resetRuntimeStore = () => {
     pageHistory: [],
     variables: new Map(),
     dslVariables: new Set(),
+    positions: new Map(),
     evaluator: null,
     animationEngine: null,
   });

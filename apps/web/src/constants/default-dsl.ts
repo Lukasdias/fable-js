@@ -18,23 +18,28 @@ export const DEFAULT_DSL = `fable "Interactive Animation Demo" do
       on_click do
         set score to score + 10
         // Move the score text when clicked
-        move #score to [80, 120] duration 300ms easing "ease-out"
+        move #score to [50 + score, 120] duration 300ms easing "ease-out"
       end
     end
 
-    // Take damage button
-    button #damage-btn "Take Damage (-15)" at [250, 180] animate "shake" duration 500ms repeat 3 do
-      on_click do
-        set health to health - 15
-      end
-    end
+     // Take damage button
+     button #damage-btn "Take Damage (-15)" at [250, 180] animate "shake" duration 500ms repeat 3 do
+       on_click do
+         set health to health - 15
+       end
+     end
 
-    // Heal button
-    button #heal-btn "Heal (+25)" at [450, 180] do
-      on_click do
-        set health to health + 25
-      end
-    end
+     // Heal button
+     button #heal-btn "Heal (+25)" at [450, 180] do
+       on_click do
+         set health to health + 25
+       end
+     end
+
+     // Conditional bonus display
+     if score > 50 do
+       text #bonus "BONUS UNLOCKED!" at [200, 300] animate "pulse" duration 1s
+     end
 
     // Animated decorative elements
     text #deco-1 "~~~" at [100, 280] animate "spin" duration 3s

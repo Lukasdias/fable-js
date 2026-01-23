@@ -80,8 +80,8 @@ export const FableButton = memo(function FableButton({
   return (
     <Group
       ref={groupRef}
-      x={agent.position?.[0] ?? 0}
-      y={agent.position?.[1] ?? 0}
+      x={(agent.position as [number, number])?.[0] ?? 0}
+      y={(agent.position as [number, number])?.[1] ?? 0}
       draggable={isDraggable}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
