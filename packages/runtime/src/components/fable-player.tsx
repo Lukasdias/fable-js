@@ -1,16 +1,17 @@
-import React, { useEffect, useCallback, useRef, useMemo, memo } from 'react'
-import { Stage, Layer } from 'react-konva'
-import type { Fable, Agent, Event, TextAgent, ButtonAgent, ImageAgent, IfBlock, ForBlock } from '@fable-js/parser'
-import { useRuntimeStore } from '../store/runtime-store.js'
+import type { Agent, ButtonAgent, Event, Fable, ForBlock, IfBlock, ImageAgent, TextAgent } from '@fable-js/parser'
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react'
+import { Layer, Stage } from 'react-konva'
 import { FableRuntimeContext, type FableContextValue } from '../context/fable-context.js'
 import { AnimationEngine } from '../engine/animation-engine.js'
-import { useCanvasScale, useAgentRefs } from '../hooks/index.js'
-import { FableText } from './fable-text.js'
+import { useAgentRefs, useCanvasScale } from '../hooks/index.js'
+import { useRuntimeStore } from '../store/runtime-store.js'
 import { FableButton } from './fable-button.js'
 import { FableImage } from './fable-image.js'
+import { FableText } from './fable-text.js'
 
 export interface FablePlayerProps {
   ast: Fable
+  assets?: Record<string, { url: string; type: string }>
   width?: number
   height?: number
   designWidth?: number
@@ -168,6 +169,7 @@ const AgentRenderer = memo(function AgentRenderer({
 
 export const FablePlayer = memo(function FablePlayer({
   ast,
+  assets = {},
   width = 800,
   height = 450,
   designWidth = 640,
@@ -209,8 +211,9 @@ export const FablePlayer = memo(function FablePlayer({
       designHeight,
       registerAgent,
       getAgentRef,
+      assets,
     }),
-    [scale, designWidth, designHeight, registerAgent, getAgentRef]
+    [scale, designWidth, designHeight, registerAgent, getAgentRef, assets]
   )
 
   // Create and register AnimationEngine

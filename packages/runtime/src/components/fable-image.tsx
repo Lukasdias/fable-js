@@ -3,6 +3,7 @@ import type Konva from 'konva'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { Image } from 'react-konva'
 import { useAgentRegistration, useDraggable } from '../hooks/index.js'
+import { useFableContext } from '../context/fable-context.js'
 
 export interface FableImageProps {
   agent: ImageAgent
@@ -14,6 +15,7 @@ export const FableImage = memo(function FableImage({
   onEvent,
 }: FableImageProps) {
   const [image, setImage] = useState<HTMLImageElement | null>(null)
+  const { assets } = useFableContext()
 
   const imageRef = useAgentRegistration<Konva.Image>(agent.id)
 
@@ -33,11 +35,23 @@ export const FableImage = memo(function FableImage({
   useEffect(() => {
     if (!agent.src) return
 
+    // Resolve asset path if it starts with 'assets/'
+    let imageSrc = agent.src
+    if (agent.src.startsWith('assets/')) {
+      const asset = assets[agent.src]
+      if (asset) {
+        imageSrc = asset.url
+      } else {
+        console.warn('Asset not found:', agent.src)
+        return
+      }
+    }
+
     const img = new window.Image()
-    img.src = agent.src
+    img.src = imageSrc
     img.onload = () => setImage(img)
-    img.onerror = () => console.warn('Failed to load image:', agent.src)
-  }, [agent.src])
+    img.onerror = () => console.warn('Failed to load image:', imageSrc)
+  }, [agent.src, assets])
 
   const handleMouseEnter = useCallback(() => {
     onEvent('on_hover', agent)

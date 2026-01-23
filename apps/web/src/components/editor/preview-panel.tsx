@@ -5,6 +5,7 @@ import { forwardRef, memo } from 'react'
 
 interface PreviewPanelProps {
   ast: Fable | null
+  assets?: Record<string, { url: string; type: string }>
   playerKey: number
   previewSize: { width: number; height: number }
   isFullscreen: boolean
@@ -197,7 +198,7 @@ const PreviewFrame = memo(function PreviewFrame({
 
 export const PreviewPanel = memo(
   forwardRef<HTMLDivElement, PreviewPanelProps>(function PreviewPanel(
-    { ast, playerKey, previewSize, isFullscreen, hasError, onStateChange },
+    { ast, assets = {}, playerKey, previewSize, isFullscreen, hasError, onStateChange },
     ref
   ) {
     const pageCount = ast?.pages.length ?? 0
@@ -229,6 +230,7 @@ export const PreviewPanel = memo(
               <FablePlayer
                 key={`preview-${playerKey}`}
                 ast={ast}
+                assets={assets}
                 width={previewSize.width}
                 height={previewSize.height}
                 onStateChange={onStateChange}

@@ -59,6 +59,7 @@ export interface FableDSLActionDict<T> extends BaseActionDict<T> {
   ForBlock?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode, arg5: IterationNode, arg6: TerminalNode) => T;
   Position?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
   Range?: (this: NonterminalNode, arg0: NonterminalNode, arg1: TerminalNode, arg2: NonterminalNode) => T;
+  AssetPath?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode) => T;
   Expression?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   LogicalExpr_or?: (this: NonterminalNode, arg0: NonterminalNode, arg1: TerminalNode, arg2: NonterminalNode) => T;
   LogicalExpr?: (this: NonterminalNode, arg0: NonterminalNode) => T;

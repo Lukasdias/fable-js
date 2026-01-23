@@ -191,14 +191,14 @@ export function createSemantics(grammar: Grammar): Semantics {
     
     ImageAgent(_image, agentName, src, _at, position, animate) {
       // If #id is provided, use it; otherwise generate UUID
-      const id = agentName.children.length > 0 
-        ? agentName.children[0].toAST() 
+      const id = agentName.children.length > 0
+        ? agentName.children[0].toAST()
         : generateAgentId();
 
       const result = {
         type: 'image',
         id,
-        src: src.toAST().value, // Extract string from typed value
+        src: src.toAST().value || src.sourceString, // Handle both StringLiteral and AssetPath
         position: position.toAST()
       };
 
@@ -211,14 +211,14 @@ export function createSemantics(grammar: Grammar): Semantics {
     
     VideoAgent(_video, agentName, src, _at, position) {
       // If #id is provided, use it; otherwise generate UUID
-      const id = agentName.children.length > 0 
-        ? agentName.children[0].toAST() 
+      const id = agentName.children.length > 0
+        ? agentName.children[0].toAST()
         : generateAgentId();
 
       const result = {
         type: 'video',
         id,
-        src: src.toAST().value, // Extract string from typed value
+        src: src.toAST().value || src.sourceString, // Handle both StringLiteral and AssetPath
         position: position.toAST()
       };
 
@@ -685,6 +685,13 @@ export function createSemantics(grammar: Grammar): Semantics {
       return {
         type: 'string',
         value: chars.sourceString
+      };
+    },
+
+    AssetPath(_assets, path) {
+      return {
+        type: 'asset',
+        value: _assets.sourceString + path.sourceString
       };
     },
     

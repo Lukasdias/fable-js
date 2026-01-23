@@ -19,6 +19,8 @@ export interface FableContextValue {
   registerAgent: (id: string, ref: Konva.Node | null) => void;
   /** Get an agent's Konva node ref by ID */
   getAgentRef: (id: string) => Konva.Node | null;
+  /** Asset mappings for resolving asset paths to URLs */
+  assets: Record<string, { url: string; type: string }>;
 }
 
 export const FableRuntimeContext = createContext<FableContextValue>({
@@ -27,6 +29,7 @@ export const FableRuntimeContext = createContext<FableContextValue>({
   designHeight: 360,
   registerAgent: () => {},
   getAgentRef: () => null,
+  assets: {},
 });
 
 export const useFableContext = () => useContext(FableRuntimeContext);

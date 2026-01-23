@@ -24,9 +24,15 @@ export function buildFullAST() {
   mainAst.requires.forEach((path: string) => {
     const content = fileMap[path];
     if (content) {
-      const ast = parseDSL(content);
-      allPages.push(...ast.pages);
-      allStatements.push(...ast.statements);
+      // Wrap content in fable structure for parsing
+      const wrappedContent = `fable "temp" do\n${content}\nend`;
+      try {
+        const ast = parseDSL(wrappedContent);
+        allPages.push(...ast.pages);
+        allStatements.push(...ast.statements);
+      } catch (error) {
+        console.warn(`Failed to parse ${path}:`, error);
+      }
     } else {
       console.warn(`Required file not found: ${path}`);
     }
