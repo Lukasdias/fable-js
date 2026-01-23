@@ -294,6 +294,28 @@ export const useRuntimeStore = create<RuntimeState>()(
           }
           break;
 
+        case 'tween':
+          // General tween action for any properties
+          if (animationEngine) {
+            // Evaluate property values if they are expressions
+            const tweenProps: Record<string, any> = {};
+            for (const [key, value] of Object.entries(stmt.properties)) {
+              if (typeof value === 'object' && value !== null) {
+                tweenProps[key] = evaluator?.evaluate(value as any);
+              } else {
+                tweenProps[key] = value;
+              }
+            }
+            animationEngine.tweenAgent(stmt.agentId, {
+              properties: tweenProps,
+              duration: stmt.duration,
+              easing: stmt.easing,
+            });
+          } else {
+            console.warn('AnimationEngine not available for tween action');
+          }
+          break;
+
         case 'stop_animation':
           if (animationEngine) {
             animationEngine.stopAnimation(stmt.agentId);

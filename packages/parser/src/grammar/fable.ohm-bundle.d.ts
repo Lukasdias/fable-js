@@ -42,6 +42,8 @@ export interface FableDSLActionDict<T> extends BaseActionDict<T> {
   StopMusicAction?: (this: NonterminalNode, arg0: TerminalNode) => T;
   StopSoundAction?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode) => T;
   MoveAction?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode, arg5: NonterminalNode, arg6: IterationNode) => T;
+  TweenAction?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: IterationNode, arg5: IterationNode) => T;
+  TweenProp?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode) => T;
   StopAnimationAction?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode) => T;
   WaitBlock?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: IterationNode, arg4: TerminalNode) => T;
   TimerBlock?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: TerminalNode, arg4: IterationNode, arg5: TerminalNode) => T;

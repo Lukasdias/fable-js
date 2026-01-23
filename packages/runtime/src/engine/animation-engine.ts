@@ -1,4 +1,20 @@
 import Konva from 'konva';
+import { pulseAnimation } from './animations/pulse';
+import { bounceAnimation } from './animations/bounce';
+import { spinAnimation } from './animations/spin';
+import { shakeAnimation } from './animations/shake';
+import { fadeInAnimation } from './animations/fade-in';
+import { fadeOutAnimation } from './animations/fade-out';
+
+// Animation registry
+const ANIMATION_REGISTRY: Record<string, any> = {
+  pulse: pulseAnimation,
+  bounce: bounceAnimation,
+  spin: spinAnimation,
+  shake: shakeAnimation,
+  fade_in: fadeInAnimation,
+  fade_out: fadeOutAnimation,
+};
 
 /**
  * Predefined animation types supported by the DSL.
@@ -10,24 +26,30 @@ export type AnimationType = 'bounce' | 'pulse' | 'fade_in' | 'fade_out' | 'spin'
  * Easing function types matching Konva's built-in easings.
  * Usage in DSL: `move agent 1 to [400, 100] duration 500ms easing "ease-out"`
  */
-export type EasingType = 
+export type EasingType =
   | 'linear'
   | 'ease-in'
   | 'ease-out'
   | 'ease-in-out'
   | 'back-ease-in'
   | 'back-ease-out'
+  | 'back-ease-in-out'
   | 'elastic-ease-in'
   | 'elastic-ease-out'
+  | 'elastic-ease-in-out'
+  | 'bounce-ease-in'
   | 'bounce-ease-out'
+  | 'bounce-ease-in-out'
   | 'strong-ease-in'
-  | 'strong-ease-out';
+  | 'strong-ease-out'
+  | 'strong-ease-in-out';
 
 /**
  * Maps easing string names from DSL to Konva easing functions.
  * Using 'any' for the function type since Konva's elastic easings have different signatures.
  */
 const EASING_MAP: Record<EasingType | string, (t: number, b: number, c: number, d: number, ...args: any[]) => number> = {
+  // Existing mappings
   'linear': Konva.Easings.Linear,
   'ease-in': Konva.Easings.EaseIn,
   'ease-out': Konva.Easings.EaseOut,
@@ -39,6 +61,13 @@ const EASING_MAP: Record<EasingType | string, (t: number, b: number, c: number, 
   'bounce-ease-out': Konva.Easings.BounceEaseOut,
   'strong-ease-in': Konva.Easings.StrongEaseIn,
   'strong-ease-out': Konva.Easings.StrongEaseOut,
+
+  // Additional easings from docs
+  'back-ease-in-out': Konva.Easings.BackEaseInOut,
+  'elastic-ease-in-out': Konva.Easings.ElasticEaseInOut,
+  'bounce-ease-in': Konva.Easings.BounceEaseIn,
+  'bounce-ease-in-out': Konva.Easings.BounceEaseInOut,
+  'strong-ease-in-out': Konva.Easings.StrongEaseInOut,
 };
 
 /**
@@ -67,7 +96,7 @@ export interface AnimationOptions {
 /**
  * Stores original node values for restoration after animation ends.
  */
-interface OriginalValues {
+export interface OriginalValues {
   scaleX: number;
   scaleY: number;
   opacity: number;
@@ -80,7 +109,7 @@ interface OriginalValues {
  * Frame object passed to Konva.Animation callback.
  * Konva doesn't export this type, so we define it here.
  */
-interface AnimationFrame {
+export interface AnimationFrame {
   /** Total elapsed time since animation start in milliseconds */
   time: number;
   /** Time since last frame in milliseconds */
@@ -95,16 +124,17 @@ interface AnimationFrame {
  * - Moving agents with tweening (move action)
  * - Starting/stopping predefined animations (animate option)
  */
+
 export class AnimationEngine {
   /** Map of agent ID to their active Konva.Animation instances */
   private animations: Map<string, Konva.Animation> = new Map();
-  
+
   /** Map of agent ID to their active Konva.Tween instances */
   private tweens: Map<string, Konva.Tween> = new Map();
-  
+
   /** Map of agent ID to original values for restoration on stop */
   private originalValues: Map<string, OriginalValues> = new Map();
-  
+
   /** Callback to get agent ref by ID */
   private getAgentRef: (id: string) => Konva.Node | null;
 
@@ -140,6 +170,35 @@ export class AnimationEngine {
         this.tweens.delete(agentId);
         options.onComplete?.();
       },
+    });
+
+    this.tweens.set(agentId, tween);
+    tween.play();
+    return true;
+  }
+
+  /**
+   * Tween any properties of an agent.
+   */
+  tweenAgent(agentId: string, options: { properties: Record<string, any>; duration: number; easing?: EasingType | string }): boolean {
+    const node = this.getAgentRef(agentId);
+    if (!node) {
+      console.warn(`AnimationEngine: Agent ${agentId} not found`);
+      return false;
+    }
+
+    // Stop any existing tween for this agent
+    this.stopTween(agentId);
+
+    const easing = options.easing
+      ? (EASING_MAP[options.easing] || Konva.Easings.EaseOut)
+      : Konva.Easings.EaseOut;
+
+    const tween = new Konva.Tween({
+      node,
+      duration: options.duration / 1000, // Konva uses seconds
+      easing,
+      ...options.properties, // Spread the properties to tween
     });
 
     this.tweens.set(agentId, tween);
@@ -191,12 +250,15 @@ export class AnimationEngine {
     // Stop any existing animation for this agent
     this.stopAnimation(agentId);
 
-    const duration = options.duration || 1000;
-    const repeat = options.repeat ?? -1; // -1 = infinite by default
-
     const layer = node.getLayer();
     if (!layer) {
       console.warn(`AnimationEngine: Agent ${agentId} has no layer`);
+      return false;
+    }
+
+    const animationFunction = ANIMATION_REGISTRY[options.type] as any;
+    if (!animationFunction) {
+      console.warn(`AnimationEngine: Unknown animation type "${options.type}"`);
       return false;
     }
 
@@ -211,138 +273,7 @@ export class AnimationEngine {
     };
     this.originalValues.set(agentId, originalValues);
 
-    // Track animation start time and cycles completed
-    let animationStartTime: number | null = null;
-    let lastCycle = -1;
-
-    // Helper to check if animation should stop based on repeat count
-    const shouldStopAnimation = (frame: AnimationFrame): boolean => {
-      if (repeat < 0) return false; // Infinite
-      
-      if (animationStartTime === null) {
-        animationStartTime = frame.time;
-      }
-      
-      const elapsed = frame.time - animationStartTime!;
-      const currentCycle = Math.floor(elapsed / duration);
-      
-      if (currentCycle > lastCycle) {
-        lastCycle = currentCycle;
-      }
-      
-      return currentCycle >= repeat;
-    };
-
-    // Helper to stop animation and restore values
-    const finishAnimation = (anim: Konva.Animation): void => {
-      anim.stop();
-      this.animations.delete(agentId);
-      this.restoreOriginalValues(agentId);
-    };
-
-    let animation: Konva.Animation;
-
-    switch (options.type) {
-      case 'bounce':
-        animation = new Konva.Animation((frame) => {
-          if (!frame) return;
-          
-          if (shouldStopAnimation(frame)) {
-            finishAnimation(animation);
-            return;
-          }
-          
-          const progress = (frame.time % duration) / duration;
-          // Bounce uses sin for smooth up/down motion
-          const bounce = Math.abs(Math.sin(progress * Math.PI));
-          node.y(originalValues.y - bounce * 20);
-        }, layer);
-        break;
-
-      case 'pulse':
-        animation = new Konva.Animation((frame) => {
-          if (!frame) return;
-          
-          if (shouldStopAnimation(frame)) {
-            finishAnimation(animation);
-            return;
-          }
-          
-          const progress = (frame.time % duration) / duration;
-          const scale = 1 + Math.sin(progress * Math.PI * 2) * 0.1;
-          node.scaleX(originalValues.scaleX * scale);
-          node.scaleY(originalValues.scaleY * scale);
-        }, layer);
-        break;
-
-      case 'fade_in':
-        node.opacity(0);
-        animation = new Konva.Animation((frame) => {
-          if (!frame) return;
-          const progress = Math.min(frame.time / duration, 1);
-          node.opacity(progress * originalValues.opacity);
-          if (progress >= 1) {
-            animation.stop();
-            this.animations.delete(agentId);
-            // Don't restore for fade_in - keep the final opacity
-            this.originalValues.delete(agentId);
-          }
-        }, layer);
-        break;
-
-      case 'fade_out':
-        animation = new Konva.Animation((frame) => {
-          if (!frame) return;
-          const progress = Math.min(frame.time / duration, 1);
-          node.opacity(originalValues.opacity * (1 - progress));
-          if (progress >= 1) {
-            animation.stop();
-            this.animations.delete(agentId);
-            // Don't restore for fade_out - keep the final opacity (0)
-            this.originalValues.delete(agentId);
-          }
-        }, layer);
-        break;
-
-      case 'spin':
-        animation = new Konva.Animation((frame) => {
-          if (!frame) return;
-          
-          if (shouldStopAnimation(frame)) {
-            finishAnimation(animation);
-            return;
-          }
-          
-          const progress = (frame.time % duration) / duration;
-          node.rotation(originalValues.rotation + progress * 360);
-        }, layer);
-        break;
-
-      case 'shake':
-        // Shake uses a continuous oscillation without decay for looping
-        // Each cycle shakes and returns to center
-        animation = new Konva.Animation((frame) => {
-          if (!frame) return;
-          
-          if (shouldStopAnimation(frame)) {
-            finishAnimation(animation);
-            return;
-          }
-          
-          const progress = (frame.time % duration) / duration;
-          // Use a smooth oscillation that starts and ends at 0
-          // sin(0) = 0, sin(2*PI) = 0, with peaks in between
-          const shake = Math.sin(progress * Math.PI * 6) * 5 * Math.sin(progress * Math.PI);
-          node.x(originalValues.x + shake);
-        }, layer);
-        break;
-
-      default:
-        console.warn(`AnimationEngine: Unknown animation type "${options.type}"`);
-        this.originalValues.delete(agentId);
-        return false;
-    }
-
+    const animation = animationFunction(node, layer, options, originalValues);
     this.animations.set(agentId, animation);
     animation.start();
     return true;
@@ -377,12 +308,7 @@ export class AnimationEngine {
     this.tweens.clear();
   }
 
-  /**
-   * Check if an agent has an active animation.
-   */
-  hasAnimation(agentId: string): boolean {
-    return this.animations.has(agentId);
-  }
+
 
   /**
    * Check if an agent has an active tween.

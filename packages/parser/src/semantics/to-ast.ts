@@ -265,18 +265,28 @@ export function createSemantics(grammar: Grammar): Semantics {
     },
 
     MoveAction(_move, agentRef, _to, position, _duration, duration, easing) {
-      const result = {
+      return {
         type: 'move',
-        agentId: agentRef.toAST(), // AgentRef returns string ID
-        to: position.toAST(), // Position returns [number, number]
-        duration: duration.toAST() // Duration returns number
+        agentId: agentRef.toAST(),
+        to: position.toAST(),
+        duration: duration.toAST().value,
+        easing: easing.toAST()[0]?.value
       };
+    },
 
-      if (easing.children.length > 0) {
-        result.easing = easing.children[0].toAST(); // EasingOption returns string
-      }
-
-      return result;
+    TweenAction(_tween, agentRef, _duration, duration, props, easing) {
+      const properties: Record<string, number | string> = {};
+      props.children.forEach((prop: any) => {
+        const [key, value] = prop.toAST();
+        properties[key] = value;
+      });
+      return {
+        type: 'tween',
+        agentId: agentRef.toAST(),
+        properties,
+        duration: duration.toAST().value,
+        easing: easing.toAST()[0]?.value
+      };
     },
 
     StopAnimationAction(_stopAnimation, agentRef) {
@@ -404,6 +414,10 @@ export function createSemantics(grammar: Grammar): Semantics {
 
     EasingOption(_easing, value) {
       return value.toAST().value; // Extract string from typed value
+    },
+
+    TweenProp(key, value) {
+      return [key.sourceString, value.toAST().value];
     },
 
     // Expressions

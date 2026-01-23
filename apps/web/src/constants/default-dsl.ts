@@ -41,6 +41,9 @@ export const DEFAULT_DSL = `fable "Interactive Animation Demo" do
        text #bonus "BONUS UNLOCKED!" at [200, 300] animate "pulse" duration 1s
      end
 
+     // Advanced tweening example
+     tween #collect-btn duration 500ms scaleX 1.2 scaleY 1.2 opacity 0.8 easing "bounce-ease-out"
+
     // Animated decorative elements
     text #deco-1 "~~~" at [100, 280] animate "spin" duration 3s
     text #deco-2 "***" at [300, 280] animate "bounce" duration 800ms

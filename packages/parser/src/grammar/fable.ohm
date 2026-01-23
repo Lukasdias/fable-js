@@ -43,7 +43,7 @@ FableDSL {
 
   // =========== Actions ===========
   Action = GoToPageAction | PlaySoundAction | StopMusicAction | StopSoundAction
-         | MoveAction | StopAnimationAction | SetStatement | AddStatement | SubtractStatement
+         | MoveAction | StopAnimationAction | TweenAction | SetStatement | AddStatement | SubtractStatement
   GoToPageAction = "go_to_page" NumberLiteral
    PlaySoundAction = PlaySoundWithVolume | PlaySoundWithoutVolume
    PlaySoundWithVolume = "play_sound" StringLiteral "volume" NumberLiteral
@@ -51,6 +51,8 @@ FableDSL {
   StopMusicAction = "stop_music"
   StopSoundAction = "stop_sound" StringLiteral
   MoveAction = "move" AgentRef "to" Position "duration" Duration EasingOption?
+  TweenAction = "tween" AgentRef "duration" Duration TweenProp* EasingOption?
+  TweenProp = identifier (NumberLiteral | StringLiteral)
   StopAnimationAction = "stop_animation" AgentRef
 
 

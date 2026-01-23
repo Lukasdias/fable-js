@@ -45,12 +45,20 @@ export interface MoveAction {
   easing?: string;
 }
 
+export interface TweenAction {
+  type: 'tween';
+  agentId: string;
+  properties: Record<string, number | string>;
+  duration: number;
+  easing?: string;
+}
+
 export interface StopAnimationAction {
   type: 'stop_animation';
   agentId: string;
 }
 
-export type Action = GoToPageAction | PlaySoundAction | StopMusicAction | StopSoundAction | MoveAction | StopAnimationAction;
+export type Action = GoToPageAction | PlaySoundAction | StopMusicAction | StopSoundAction | MoveAction | StopAnimationAction | TweenAction;
 
 export interface Event {
   type: EventType;
