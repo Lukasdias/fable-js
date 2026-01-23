@@ -5,7 +5,7 @@ import { EditorToolbar, EditorPanel, PreviewPanel } from './editor'
 import { PageTraveller } from './page-traveller'
 import { usePreviewSize } from '@/hooks/use-preview-size'
 import { useDSLParser } from '@/hooks/use-dsl-parser'
-import { DEFAULT_DSL } from '@/constants/default-dsl'
+import { DEFAULT_DSL, DEFAULT_AST } from '@/constants/default-dsl'
 import { useRuntimeStore, useRuntimeActions } from '@fable-js/runtime'
 
 export function FableEditor() {
@@ -22,7 +22,7 @@ export function FableEditor() {
   const fablePlayerRef = useRef<any>(null)
 
   // Custom hooks
-  const { ast, error } = useDSLParser(dsl)
+  const { ast, error } = useDSLParser(dsl, DEFAULT_AST)
   const previewSize = usePreviewSize(previewContainerRef, [isFullscreen])
   const { goToPage, reset } = useRuntimeActions()
 

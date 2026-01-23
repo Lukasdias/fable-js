@@ -1,7 +1,8 @@
 FableDSL {
   // =========== Top Level ===========
   Fable = "fable" StringLiteral "do" FableContent* "end"
-  FableContent = Page | Statement | MusicStatement
+  FableContent = Page | Statement | MusicStatement | RequireStatement
+  RequireStatement = "require" StringLiteral
 
   // =========== Pages ===========
   Page = "page" NumberLiteral PageOption? "do" PageContent* "end"

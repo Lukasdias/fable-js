@@ -10,8 +10,8 @@ interface UseDSLParserResult {
  * Hook to parse DSL code and manage AST/error state.
  * Automatically parses when input changes.
  */
-export function useDSLParser(dsl: string): UseDSLParserResult {
-  const [ast, setAst] = useState<Fable | null>(null)
+export function useDSLParser(dsl: string, initialAst?: Fable): UseDSLParserResult {
+  const [ast, setAst] = useState<Fable | null>(initialAst || null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {

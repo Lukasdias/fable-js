@@ -14,6 +14,7 @@ import {
 export interface FableDSLActionDict<T> extends BaseActionDict<T> {
   Fable?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: IterationNode, arg4: TerminalNode) => T;
   FableContent?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  RequireStatement?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode) => T;
   Page?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: IterationNode, arg3: TerminalNode, arg4: IterationNode, arg5: TerminalNode) => T;
   PageOption?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode) => T;
   PageContent?: (this: NonterminalNode, arg0: NonterminalNode) => T;

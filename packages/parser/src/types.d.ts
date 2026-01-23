@@ -212,11 +212,19 @@ export interface Page {
   autoAdvance?: number;
 }
 
+export type FableContent = Page | Statement | MusicStatement | RequireStatement;
+
 export interface Fable {
   type: 'fable';
   title: string;
   pages: Page[];
-  statements?: Statement[];
+  statements: Statement[];
+  requires: string[];
+}
+
+export interface RequireStatement {
+  type: 'require';
+  path: string;
 }
 
 // =========== Validation Result ===========

@@ -29,14 +29,17 @@ function generateAgentId(): string {
 export function createSemantics(grammar: Grammar): Semantics {
   return grammar.createSemantics().addOperation('toAST', {
     Fable(_fable, title, _do, contents, _end) {
-      // Separate pages from statements
+      // Separate pages, statements, and requires
       const pages = [];
       const statements = [];
+      const requires = [];
 
       contents.children.forEach(child => {
         const ast = child.toAST();
         if (ast.type === 'page') {
           pages.push(ast);
+        } else if (ast.type === 'require') {
+          requires.push(ast.path);
         } else {
           statements.push(ast);
         }
@@ -44,9 +47,17 @@ export function createSemantics(grammar: Grammar): Semantics {
 
       return {
         type: 'fable',
-        title: title.toAST().value, // Extract string from typed value
-        pages: pages,
-        statements: statements
+        title: title.toAST().value,
+        pages,
+        statements,
+        requires
+      };
+    },
+
+    RequireStatement(_require, path) {
+      return {
+        type: 'require',
+        path: path.toAST().value
       };
     },
 
